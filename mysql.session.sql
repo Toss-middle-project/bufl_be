@@ -54,6 +54,8 @@ INSERT INTO `GoalTransaction` (`goal_id`, `transaction_amount`, `transaction_typ
 VALUES (1, 100000.00, '출금');
 INSERT INTO `GoalTransaction` (`goal_id`, `transaction_amount`, `transaction_type`) 
 VALUES (2, 3000000.00, '입금');
+INSERT INTO `GoalTransaction` (`goal_id`, `transaction_amount`, `transaction_type`) 
+VALUES (2, 3000000.00, '입금');
 
 select * from  `GoalTransaction` ;
 DROP TABLE `GoalTransaction` ;
