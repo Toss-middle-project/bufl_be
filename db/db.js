@@ -2,10 +2,10 @@ const mysql = require("mysql");
 
 // 데이터베이스 연결 설정
 const connection = mysql.createConnection({
-  host: process.env.DB_HOST,
-  user: process.env.DB_USER,
-  password: process.env.DB_PASS,
-  database: process.env.DB_NAME,
+  host: "bufl-database.crg60wagibq8.ap-northeast-2.rds.amazonaws.com",
+  user: "admin",
+  password: "bufl1234",
+  database: "bufl",
 });
 
 // 연결
