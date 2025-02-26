@@ -57,7 +57,7 @@ router.post("/login", function (req, res) {
       function (error, results) {
         if (error) throw error;
         if (results.length > 0) {
-          res.send("로그인 성공");
+          res.status(201).json({ message: "로그인 성공" });
           // req.session.is_logined = true; // 세션 정보 갱신
           // req.session.save(function () {
           //   res.redirect(`/`);
