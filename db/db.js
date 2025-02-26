@@ -2,10 +2,10 @@ const mysql = require("mysql");
 
 // 데이터베이스 연결 설정
 const connection = mysql.createConnection({
-  host: "192.168.1.65",
-  user: "ninja",
-  password: "1234",
-  database: "bufl",
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASS,
+  database: process.env.DB_NAME,
 });
 
 // 연결
