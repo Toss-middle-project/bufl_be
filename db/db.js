@@ -1,4 +1,4 @@
-const mysql = require("mysql");
+const mysql = require("mysql2");
 
 // 데이터베이스 연결 설정
 const connection = mysql.createConnection({
@@ -15,4 +15,4 @@ connection.connect((err) => {
 });
 
 // 연결 종료
-connection.end();
+module.exports = connection;
