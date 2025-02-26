@@ -11,7 +11,7 @@ const port = 5000;
 app.use(cors());
 app.use(express.json());
 
-app.use("/api/users", joinRouter);
+app.use("/api/join", joinRouter);
 
 // 세션 설정
 app.use(
