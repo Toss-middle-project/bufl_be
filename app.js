@@ -2,6 +2,7 @@ const express = require("express");
 const cors = require("cors");
 const db = require("./db/db"); // DB 설정 파일
 const usersRouter = require("./api/users"); // 사용자 라우터 가져오기
+const mainRouter = require("./api/main");
 const session = require("express-session");
 
 const app = express();
@@ -21,6 +22,7 @@ app.use(
 );
 
 app.use("/api/users", usersRouter); // 라우터 등록
+app.use("/api", mainRouter);
 
 app.listen(port, () => {
   console.log(`Server running on port ${port}`);

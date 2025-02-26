@@ -1,7 +1,16 @@
-var express = require("express");
+const express = require("express");
 const session = require("express-session");
-var router = express.Router();
-var db = require("../db/db");
+const router = express.Router();
+const db = require("../db/db");
+
+router.use(
+  session({
+    secret: "secret code", // 세션 암호화에 사용할 키
+    resave: false, // 세션 변경 시마다 저장하는 설정
+    saveUninitialized: true, // 세션 초기화 상태에서 저장할지 여부
+    cookie: { secure: false }, // https를 사용할 경우 true로 설정
+  })
+);
 
 router.post("/", (req, res) => {
   const { user_name, user_regnu, user_phone, user_password } = req.body;
@@ -39,6 +48,12 @@ router.post("/", (req, res) => {
             console.error("회원가입 오류:", err);
             return res.status(500).json({ message: "서버 오류" });
           }
+          req.session.user = {
+            user_id,
+            user_name,
+            user_password,
+          };
+
           res.status(201).json({ message: "회원가입 성공" });
         }
       );
@@ -46,7 +61,6 @@ router.post("/", (req, res) => {
   );
 });
 
-// 로그인 프로세스
 router.post("/login", function (req, res) {
   // 경로를 /login으로 수정
   var user_password = req.body.user_password;
@@ -63,13 +77,13 @@ router.post("/login", function (req, res) {
           //   res.redirect(`/`);
           // });
         } else {
-          res.send(`<script type="text/javascript">alert("로그인 정보가 일치하지 않습니다."); 
+          res.send(`<script type="text/javascript">alert("로그인 정보가 일치하지 않습니다.");
               document.location.href="/api/users/login";</script>`);
         }
       }
     );
   } else {
-    res.send(`<script type="text/javascript">alert("비밀번호를 입력하세요!"); 
+    res.send(`<script type="text/javascript">alert("비밀번호를 입력하세요!");
       document.location.href="/api/users/login";</script>`);
   }
 });
