@@ -3,10 +3,21 @@ const session = require("express-session");
 const router = express.Router();
 const db = require("../db/db");
 
+router.use(
+  session({
+    secret: "secret code", // 세션 암호화에 사용할 키
+    resave: false, // 세션 변경 시마다 저장하는 설정
+    saveUninitialized: true, // 세션 초기화 상태에서 저장할지 여부
+    cookie: { secure: false }, // https를 사용할 경우 true로 설정
+  })
+);
+
+//시작 화면
 router.get("/", (req, res) => {
   res.json({ message: "=시작 화면입니다." });
 });
 
+//회원가입 로직
 router.post("/", (req, res) => {
   const { user_name, user_regnu, user_phone, user_password } = req.body;
 
@@ -43,10 +54,11 @@ router.post("/", (req, res) => {
             console.error("회원가입 오류:", err);
             return res.status(500).json({ message: "서버 오류" });
           }
-
-          const user_id = results.insertId; // user_id 가져오기
-          req.session.user_id = user_id; // 세션에 user_id 저장
-          req.session.user_name = user_name; // 세션에 user_name 저장
+          req.session.user = {
+            user_name,
+            user_phone,
+            user_password,
+          };
 
           res.status(201).json({ message: "회원가입 성공" });
         }
@@ -54,73 +66,90 @@ router.post("/", (req, res) => {
     }
   );
 });
+
+//PiN 번호 입력 화면
 router.get("/login", (req, res) => {
   res.json({ message: "로그인 화면입니다." });
 });
 
-// 로그인
+//PIN번호 로직
 router.post("/login", function (req, res) {
-  const user_password = req.body.user_password;
-  const user_name = req.session.user_name; // 세션에서 user_name 가져오기
-
-  if (!user_name) {
-    return res
-      .status(400)
-      .json({ message: "세션 정보가 없습니다. 다시 회원가입해주세요." });
-  }
-
-  if (!user_password) {
-    return res.send(`<script type="text/javascript">alert("비밀번호를 입력하세요!");
+  // 경로를 /login으로 수정
+  var user_password = req.body.user_password;
+  var user_phone = req.session.user.user_phone;
+  if (user_password) {
+    db.query(
+      "SELECT user_id FROM Users WHERE user_password = ? AND user_phone =?",
+      [user_password, user_phone],
+      function (error, results) {
+        if (error) throw error;
+        if (results.length > 0) {
+          req.session.is_logined = true; // 세션 정보 갱신
+          req.session.user_id = results[0].user_id;
+          res.status(201).json({ message: "로그인 성공" });
+        } else {
+          res.send(`<script type="text/javascript">alert("로그인 정보가 일치하지 않습니다.");
+              document.location.href="/api/users/login";</script>`);
+        }
+      }
+    );
+  } else {
+    res.send(`<script type="text/javascript">alert("비밀번호를 입력하세요!");
       document.location.href="/api/users/login";</script>`);
   }
-
-  db.query(
-    "SELECT * FROM Users WHERE user_name = ? AND user_password = ?",
-    [user_name, user_password],
-    function (error, results) {
-      if (error) {
-        console.error("로그인 오류:", error);
-        return res.status(500).json({ message: "서버 오류" });
-      }
-
-      if (results.length > 0) {
-        req.session.is_logined = true; // 로그인 성공 시 세션 갱신
-        res.status(201).json({ message: "로그인 성공", user_name });
-        req.session.is_logined = true; // 세션 정보 갱신
-      } else {
-        res.send(`<script type="text/javascript">alert("로그인 정보가 일치하지 않습니다.");
-            document.location.href="/api/users/login";</script>`);
-      }
-    }
-  );
 });
 
-// 회원탈퇴
-router.delete("/", function (req, res) {
-  const { user_id } = req.body; // body에서 user_id 가져오기
+//월급 정보 입력 화면
+router.get("/salary", (req, res) => {
+  res.json({ message: "월급 정보 입력 화면입니다." });
+});
 
-  if (!user_id) {
-    return res.status(400).json({ message: "user_id를 입력하세요." });
+// 월급 정보 입력
+router.post("/salary", (req, res) => {
+  const { amount, pay_date, account_id } = req.body;
+
+  if (!amount || !pay_date || !account_id) {
+    return res.status(400).json({ message: "모든 정보를 입력하세요!" });
   }
 
-  db.query(
-    "DELETE FROM Users WHERE user_id = ?",
-    [user_id],
-    function (error, results) {
-      if (error) {
-        console.error("회원 탈퇴 오류:", error);
-        return res.status(500).json({ message: "서버 오류" });
-      }
-
-      if (results.affectedRows > 0) {
-        return res.status(200).json({ message: "탈퇴 성공" });
-      } else {
-        return res
-          .status(404)
-          .json({ message: "해당 사용자가 존재하지 않습니다." });
-      }
+  const getUserIdQuery = `SELECT user_id FROM Account WHERE account_id = ?`;
+  db.query(getUserIdQuery, [account_id], (err, results) => {
+    if (err) {
+      console.error("Error fetching user_id:", err);
+      return res
+        .status(500)
+        .json({ message: "Error fetching user information" });
     }
-  );
+    if (results.length == 0) {
+      return res.status(404).json({ message: "Account not found" });
+    }
+
+    const user_id = results[0].user_id;
+
+    const insertSalaryQuery = `
+    INSERT INTO Salary (account_id, user_id, amount, pay_date, created_at, updated_at)
+    VALUES (?, ?, ?, ?, NOW(), NOW())
+  `;
+
+    db.query(
+      insertSalaryQuery,
+      [account_id, user_id, amount, pay_date],
+      (err, result) => {
+        if (err) {
+          console.error("월급 정보 입력 실패");
+          return res.status(500).json({ message: "서버오류" });
+        }
+        res
+          .status(201)
+          .json({ message: "월급 입력정보 성공", salary_id: result.insertId });
+      }
+    );
+  });
+});
+
+router.get("/interests", (req, res) => {
+  const user_id = req.session.user_id;
+  const { interests } = req.body;
 });
 
 module.exports = router;
