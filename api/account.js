@@ -4,40 +4,36 @@ const db = require("../db/db");
 
 // 계좌 목록 조회 API
 router.get("/", async (req, res) => {
-  db.query("SELECT * FROM Account", (err, results) => {
-    if (err) {
-      return res.status(500).json({ message: "서버 오류" });
-    }
+  try {
+    const [results] = await db.promise().query("SELECT * FROM Account");
     if (results.length === 0) {
       return res.status(404).json({ message: "등록된 계좌가 없습니다." });
     }
-    res.status(200).json({ accounts: results });
-  });
+    res.status(200).json({ message: "계좌목록 조회 성공", accounts: results });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ message: "서버오류" });
+  }
 });
 
 //아이디별 목록 조회
 router.get("/:user_id", async (req, res) => {
   const { user_id } = req.params; //URL에서 user_id 가져오기
 
-  db.query(
-    "SELECT * FROM Account WHERE user_id = ?",
-    [user_id],
-    (err, results) => {
-      if (err) {
-        return res.status(500).json({ message: "서버 오류" });
-      }
-
-      if (results.length === 0) {
-        return res
-          .status(404)
-          .json({ message: "해당 사용자 계좌가 없습니다." });
-      }
-
-      res
-        .status(200)
-        .json({ message: `${user_id}의 계좌목록 `, accounts: results });
+  try {
+    const [results] = await db
+      .promise()
+      .query("SELECT * FROM Account WHERE user_id = ?", [user_id]);
+    if (results.length == 0) {
+      return res.status(404).json({ message: "해당 사용자 계좌가 없습니다." });
     }
-  );
+    res
+      .status(200)
+      .json({ message: `${user_id}의 계좌목록`, accounts: results });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "서버오류" });
+  }
 });
 
 // 계좌 내역 조회 API
@@ -49,32 +45,36 @@ router.get("/:account_id/transactions", async (req, res) => {
     return res.status(400).json({ message: "계좌 ID를 제공해 주세요." });
   }
 
-  db.query(
-    `SELECT 
-        t.transaction_id, 
-        t.from_account_number, 
-        t.to_account_number, 
-        t.inout_type, 
-        t.tran_amt, 
-        t.tran_balance_amt,
-        transaction_time
-     FROM Transaction t
-     WHERE t.account_id = ?`,
-    [account_id],
-    (err, results) => {
-      if (err) {
-        return res.status(500).json({ message: "서버오류" });
-      }
-      if (results.length === 0) {
-        return res.status(404).json({ message: "계좌가 없습니다." });
-      }
-      res.status(200).json({
-        message: `계좌 ${account_id}의 거래내역 `,
-        transactions: results,
-      });
+  try {
+    const [results] = await db.promise().query(
+      `SELECT 
+      t.transaction_id, 
+      t.from_account_number, 
+      t.to_account_number, 
+      t.inout_type, 
+      t.tran_amt, 
+      t.tran_balance_amt,
+      transaction_time
+   FROM Transaction t
+   WHERE t.account_id = ?`,
+      [account_id]
+    );
+    if (results.length === 0) {
+      return res.status(404).json({ message: "계좌가 없습니다." });
     }
-  );
-}); // 계좌별 잔액 조회
+    res
+      .status(200)
+      .json({
+        message: `계좌 ${account_id}의 거래 내역`,
+        transaction: results,
+      });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "서버오류" });
+  }
+});
+
+// 계좌별 잔액 조회
 router.get("/:account_id/balance", async (req, res) => {
   const { account_id } = req.params; // URL 파라미터에서 account_id 가져오기
 
