@@ -23,13 +23,18 @@ app.use(
 app.use("/api/users", usersRouter); // 라우터 등록
 app.use("/api/accounts", accountRouter); // 라우터 등록
 
-app.get("/", (req, res) => {
-  if (req.session.user) {
-    //회원가입 한 경우 로그인 화면으로 넘어감
-    res.redirect("/api/users/login");
-  } else {
-    //회원가입 하지 않은 경우 회원가입 화면으로 넘어감
-    res.redirect("/api/users");
+app.get("/", async (req, res) => {
+  try {
+    if (req.session.user) {
+      // 회원가입 한 경우 로그인 화면으로 넘어감
+      res.redirect("/api/users/login");
+    } else {
+      // 회원가입 하지 않은 경우 회원가입 화면으로 넘어감
+      res.redirect("/api/users");
+    }
+  } catch (err) {
+    console.error("메인 화면 처리 중 오류 발생:", err);
+    res.status(500).json({ message: "서버 오류" });
   }
 });
 
