@@ -12,6 +12,10 @@ router.use(
   })
 );
 
+router.get("/", (req, res) => {
+  res.json({ message: "=시작 화면입니다." });
+});
+
 router.post("/", (req, res) => {
   const { user_name, user_regnu, user_phone, user_password } = req.body;
 
@@ -49,8 +53,8 @@ router.post("/", (req, res) => {
             return res.status(500).json({ message: "서버 오류" });
           }
           req.session.user = {
-            user_id,
             user_name,
+            user_phone,
             user_password,
           };
 
@@ -59,6 +63,10 @@ router.post("/", (req, res) => {
       );
     }
   );
+});
+
+router.get("/login", (req, res) => {
+  res.json({ message: "로그인 화면입니다." });
 });
 
 router.post("/login", function (req, res) {
@@ -72,10 +80,7 @@ router.post("/login", function (req, res) {
         if (error) throw error;
         if (results.length > 0) {
           res.status(201).json({ message: "로그인 성공" });
-          // req.session.is_logined = true; // 세션 정보 갱신
-          // req.session.save(function () {
-          //   res.redirect(`/`);
-          // });
+          req.session.is_logined = true; // 세션 정보 갱신
         } else {
           res.send(`<script type="text/javascript">alert("로그인 정보가 일치하지 않습니다.");
               document.location.href="/api/users/login";</script>`);
