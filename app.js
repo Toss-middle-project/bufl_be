@@ -3,6 +3,7 @@ const cors = require("cors");
 const db = require("./db/db"); // DB 설정 파일
 const usersRouter = require("./api/users"); // 사용자 라우터 가져오기
 const accountRouter = require("./api/account"); // 계좌목록 가져오기
+const salaryRouter = require("./api/salary");
 const session = require("express-session");
 
 const app = express();
@@ -22,6 +23,7 @@ app.use(
 
 app.use("/api/users", usersRouter); // 라우터 등록
 app.use("/api/accounts", accountRouter); // 라우터 등록
+app.use("/api/salary", salaryRouter); // 라우터 등록
 
 app.get("/", async (req, res) => {
   try {
