@@ -3,15 +3,6 @@ const session = require("express-session");
 const router = express.Router();
 const db = require("../db/db");
 
-router.use(
-  session({
-    secret: "secret code", // 세션 암호화에 사용할 키
-    resave: false, // 세션 변경 시마다 저장하는 설정
-    saveUninitialized: true, // 세션 초기화 상태에서 저장할지 여부
-    cookie: { secure: false }, // https를 사용할 경우 true로 설정
-  })
-);
-
 router.get("/", (req, res) => {
   res.json({ message: "=시작 화면입니다." });
 });
@@ -63,6 +54,9 @@ router.post("/", (req, res) => {
     }
   );
 });
+router.get("/login", (req, res) => {
+  res.json({ message: "로그인 화면입니다." });
+});
 
 // 로그인
 router.post("/login", function (req, res) {
@@ -92,6 +86,7 @@ router.post("/login", function (req, res) {
       if (results.length > 0) {
         req.session.is_logined = true; // 로그인 성공 시 세션 갱신
         res.status(201).json({ message: "로그인 성공", user_name });
+        req.session.is_logined = true; // 세션 정보 갱신
       } else {
         res.send(`<script type="text/javascript">alert("로그인 정보가 일치하지 않습니다.");
             document.location.href="/api/users/login";</script>`);
