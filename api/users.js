@@ -48,11 +48,9 @@ router.post("/", (req, res) => {
             console.error("회원가입 오류:", err);
             return res.status(500).json({ message: "서버 오류" });
           }
-          req.session.user = {
-            user_id,
-            user_name,
-            user_password,
-          };
+          const user_id = results.insertId; // user_id 가져오기
+          req.session.user_id = user_id; // 세션에 user_id 저장
+          req.session.user_name = user_name; // 세션에 user_name 저장
 
           res.status(201).json({ message: "회원가입 성공" });
         }
@@ -61,31 +59,68 @@ router.post("/", (req, res) => {
   );
 });
 
+// 로그인
 router.post("/login", function (req, res) {
-  // 경로를 /login으로 수정
-  var user_password = req.body.user_password;
-  if (user_password) {
-    db.query(
-      "SELECT * FROM Users WHERE user_password = ?",
-      [user_password],
-      function (error, results) {
-        if (error) throw error;
-        if (results.length > 0) {
-          res.status(201).json({ message: "로그인 성공" });
-          // req.session.is_logined = true; // 세션 정보 갱신
-          // req.session.save(function () {
-          //   res.redirect(`/`);
-          // });
-        } else {
-          res.send(`<script type="text/javascript">alert("로그인 정보가 일치하지 않습니다.");
-              document.location.href="/api/users/login";</script>`);
-        }
-      }
-    );
-  } else {
-    res.send(`<script type="text/javascript">alert("비밀번호를 입력하세요!");
+  const user_password = req.body.user_password;
+  const user_name = req.session.user_name; // 세션에서 user_name 가져오기
+
+  if (!user_name) {
+    return res
+      .status(400)
+      .json({ message: "세션 정보가 없습니다. 다시 회원가입해주세요." });
+  }
+
+  if (!user_password) {
+    return res.send(`<script type="text/javascript">alert("비밀번호를 입력하세요!");
       document.location.href="/api/users/login";</script>`);
   }
+
+  db.query(
+    "SELECT * FROM Users WHERE user_name = ? AND user_password = ?",
+    [user_name, user_password],
+    function (error, results) {
+      if (error) {
+        console.error("로그인 오류:", error);
+        return res.status(500).json({ message: "서버 오류" });
+      }
+
+      if (results.length > 0) {
+        req.session.is_logined = true; // 로그인 성공 시 세션 갱신
+        res.status(201).json({ message: "로그인 성공", user_name });
+      } else {
+        res.send(`<script type="text/javascript">alert("로그인 정보가 일치하지 않습니다.");
+            document.location.href="/api/users/login";</script>`);
+      }
+    }
+  );
+});
+
+// 회원탈퇴
+router.delete("/", function (req, res) {
+  const { user_id } = req.body; // body에서 user_id 가져오기
+
+  if (!user_id) {
+    return res.status(400).json({ message: "user_id를 입력하세요." });
+  }
+
+  db.query(
+    "DELETE FROM Users WHERE user_id = ?",
+    [user_id],
+    function (error, results) {
+      if (error) {
+        console.error("회원 탈퇴 오류:", error);
+        return res.status(500).json({ message: "서버 오류" });
+      }
+
+      if (results.affectedRows > 0) {
+        return res.status(200).json({ message: "탈퇴 성공" });
+      } else {
+        return res
+          .status(404)
+          .json({ message: "해당 사용자가 존재하지 않습니다." });
+      }
+    }
+  );
 });
 
 module.exports = router;
