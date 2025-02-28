@@ -118,16 +118,20 @@ router.get("/category", async (req, res) => {
     res.json.status(400).json({ message: "로그인이 필요합니다." });
   }
   try {
+    const [salaryAccount] = await db.query(
+      "SELECT bank_name, account_number FORM Account WHERE account_id = (SELECT account_id FROM Salary WHERE user_id = ?)",
+      [user_id]
+    );
     const [categories] = await db.query(
-      "SELECT name, ratio, amount FROM Categories WHERE user_id=?",
+      "SELECT name, goal_amount, background_color, ratio FROM Categories WHEHR user_id = ?",
       [user_id]
     );
 
-    for (const category of categories) {
-      if (category.name == "월급 통장") {
-      }
-    }
-  } catch (err) {}
+    res.status(201).json({ salary: salaryAccount, categories: categories });
+  } catch (err) {
+    console.error("월급쪼개기 화면 오류", err);
+    res.status(500).json({ message: "서버 오류" });
+  }
 });
 
 router.post("/category", async (req, res) => {
@@ -145,7 +149,9 @@ router.post("/category", async (req, res) => {
     }
 
     if (totalPercentage !== 100) {
-      return res.status(400).json({ message: "비율합이 100이 되어야함니다." });
+      return res
+        .status(400)
+        .json({ message: "비율합이 100이이 되어야함니다." });
     }
 
     const [salary] = await db.query(
