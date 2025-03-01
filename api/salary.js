@@ -97,21 +97,26 @@ router.post("/category", async (req, res) => {
 });
 
 router.delete("category/:id", async (req, res) => {
-  const { categoryId } = req.params.id;
+  try {
+    const categoryId = req.params.id;
 
-  const [category] = await db.query("SELECT * FROM Categories WHERE id = ?", [
-    categoryId,
-  ]);
+    const [category] = await db.query("SELECT * FROM Categories WHERE id = ?", [
+      categoryId,
+    ]);
 
-  if (!category) {
-    return res.status(400).json({ message: "카테고리가 없습니다." });
+    if (category.length === 0) {
+      return res.status(400).json({ message: "카테고리가 없습니다." });
+    }
+
+    const [result] = await db.query("DELETE FROM Categories WHERE id =?", [
+      categoryId,
+    ]);
+
+    res.status(200).json({ message: "카테고리 삭제 성공" });
+  } catch (err) {
+    console.error("카테고리 삭제 오류:", err);
+    res.status(500).json({ message: "서버 오류" });
   }
-
-  const [result] = await db.query("DLETE FROM Categories WHERE id =?", [
-    categoryId,
-  ]);
-
-  res.status(201).json({ message: "카테고리 삭제 성공" });
 });
 
 module.exports = router;
