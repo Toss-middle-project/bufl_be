@@ -4,19 +4,19 @@ const router = express.Router();
 const db = require("../db/db");
 
 router.get("/category", async (req, res) => {
-  // const user_id = req.session.user_id;
-  const user_id = 43;
-  if (!user_id) {
+  // const userId = req.session.user_id;
+  const userId = 43;
+  if (!userId) {
     res.json.status(400).json({ message: "로그인이 필요합니다." });
   }
   try {
     const [salaryAccount] = await db.query(
       "SELECT bank_name, account_number FROM Account WHERE account_id = (SELECT account_id FROM Salary WHERE user_id = ?)",
-      [user_id]
+      [userId]
     );
     const [categories] = await db.query(
       "SELECT name, goal_amount, background_color, ratio FROM Categories WHERE user_id = ?",
-      [user_id]
+      [userId]
     );
 
     // 반환할 데이터 정리
@@ -41,8 +41,8 @@ router.get("/category", async (req, res) => {
 });
 
 router.post("/category", async (req, res) => {
-  // const user_id = req.session.user_id;
-  const user_id = 43;
+  // const userId = req.session.user_id;
+  const userId = 43;
   const categories = req.body;
 
   if (!Array.isArray(categories) || categories.length === 0) {
@@ -62,7 +62,7 @@ router.post("/category", async (req, res) => {
 
     const [salary] = await db.query(
       "SELECT amount FROM Salary WHERE user_id = ?",
-      [user_id]
+      [userId]
     );
     if (salary.length === 0) {
       return res.status(400).json({ message: "월급 정보가 없습니다." });
@@ -94,6 +94,24 @@ router.post("/category", async (req, res) => {
     console.error("카테고리 추가 오류:", err);
     res.status(500).json({ message: "서버 오류" });
   }
+});
+
+router.delete("category/:id", async (req, res) => {
+  const { categoryId } = req.params.id;
+
+  const [category] = await db.query("SELECT * FROM Categories WHERE id = ?", [
+    categoryId,
+  ]);
+
+  if (!category) {
+    return res.status(400).json({ message: "카테고리가 없습니다." });
+  }
+
+  const [result] = await db.query("DLETE FROM Categories WHERE id =?", [
+    categoryId,
+  ]);
+
+  res.status(201).json({ message: "카테고리 삭제 성공" });
 });
 
 module.exports = router;
