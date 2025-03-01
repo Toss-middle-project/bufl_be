@@ -15,7 +15,7 @@ router.get("/category", async (req, res) => {
       [userId]
     );
     const [categories] = await db.query(
-      "SELECT name, goal_amount, background_color, ratio FROM Categories WHERE user_id = ?",
+      "SELECT name, goal_amount, background_color, ratio, amount FROM Categories WHERE user_id = ?",
       [userId]
     );
 
