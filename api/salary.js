@@ -73,7 +73,7 @@ router.post("/category", async (req, res) => {
       const salaryAmount = salary[0]?.amount || 0;
       const amount = (salaryAmount * category.ratio) / 100;
       return [
-        user_id,
+        userId,
         category.name,
         category.goal_amount || 0,
         category.background_color,
