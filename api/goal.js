@@ -62,23 +62,6 @@ router.get("/:user_id", async (req, res) => {
   }
 });
 
-// 사용자별 목표내역
-router.get("/:user_id/:goal_id", async (req, res) => {
-  const { user_id } = req.params;
-  try {
-    // 사용자가 생성한 모든 목표내역 가져오기
-    const [results] = await db.query(`SELECT * FROM goal WHERE user_id=?`, [
-      user_id,
-    ]);
-    if (results.length === 0) {
-      res.status(404).json({ message: "목표 내역이 없습니다." });
-    }
-    res.status(200).json({ message: `${user_id}의 목표 내역`, goals: results });
-  } catch (err) {
-    console.error(err);
-    res.status(500).json({ message: "서버 오류" });
-  }
-});
 // 목표 상세내역
 router.get("/:user_id/:goal_id", async (req, res) => {
   const { user_id, goal_id } = req.params;
