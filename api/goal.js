@@ -18,7 +18,7 @@ router.post("/", async (req, res) => {
 
   try {
     const [result] = await db.execute(
-      `INSERT INTO Goal (goal_name, goal_amount, goal_duration, goal_start, goal_end, userId) 
+      `INSERT INTO goal (goal_name, goal_amount, goal_duration, goal_start, goal_end, userId) 
        VALUES (?, ?, ?, ?, ?, ?)`,
       [goal_name, goal_amount, goal_duration, goal_start, goal_end, userId]
     );
@@ -49,7 +49,7 @@ router.get("/:user_id", async (req, res) => {
   const { user_id } = req.params;
   try {
     // 사용자가 생성한 모든 목표내역 가져오기
-    const [results] = await db.query(`SELECT * FROM Goal WHERE userId=?`, [
+    const [results] = await db.query(`SELECT * FROM goal WHERE userId=?`, [
       user_id,
     ]);
     if (results.length === 0) {
@@ -69,28 +69,16 @@ router.get("/:user_id/:goal_id", async (req, res) => {
   try {
     // 사용자 및 목표에 대한 정보 조회
     const [goalResult] = await db.query(
-      `SELECT * FROM Goal WHERE goal_id = ? AND userId = ?`,
+      `SELECT * FROM goal WHERE goal_id = ? AND userId = ?`,
       [goal_id, user_id]
     );
 
     if (goalResult.length === 0) {
       return res.status(404).json({ message: "목표를 찾을 수 없습니다." });
     }
-
-    // 목표 정보 반환
-    const goal = goalResult[0];
-
     res.status(200).json({
-      message: "목표 정보 조회 성공",
-      goal: {
-        goal_id: goal.goal_id,
-        goal_name: goal.goal_name,
-        goal_amount: goal.goal_amount,
-        goal_duration: goal.goal_duration,
-        goal_start: goal.goal_start,
-        goal_end: goal.goal_end,
-        userId: goal.userId,
-      },
+      message: `${user_id}의 ${goal_id}목표 정보 조회 성공`,
+      goal: goalResult[0],
     });
   } catch (err) {
     console.error(err);
@@ -106,7 +94,7 @@ router.get("/:user_id/:goal_id/detail", async (req, res) => {
   try {
     // 사용자 및 목표에 대한 정보 조회
     const [goalResult] = await db.query(
-      `SELECT * FROM Goal WHERE goal_id = ? AND userId = ?`,
+      `SELECT * FROM goal WHERE goal_id = ? AND userId = ?`,
       [goal_id, user_id]
     );
 

@@ -8,8 +8,8 @@ router.get("/", async (req, res) => {
     // 1. 사용자가 보유한 모든 소비내역 가져오기
     const [transactions] = await db.query(
       ` SELECT t.transaction_id, t.account_id, t.inout_type, t.tran_amt, t.transaction_time
-        FROM Transaction t
-        JOIN Account a ON t.account_id = a.account_id`
+        FROM transaction t
+        JOIN account a ON t.account_id = a.account_id`
     );
 
     if (transactions.length === 0) {
@@ -34,8 +34,8 @@ router.get("/:user_id", async (req, res) => {
     // 1. 사용자가 보유한 모든 소비내역 가져오기
     const [transactions] = await db.query(
       ` SELECT t.transaction_id, t.account_id,t.inout_type, t.tran_amt, t.tran_balance_amt,  t.tran_desc, t.transaction_time
-        FROM Transaction t
-        JOIN Account a ON t.account_id = a.account_id
+        FROM transaction t
+        JOIN account a ON t.account_id = a.account_id
         WHERE a.user_id = ? `,
       [user_id]
     );
@@ -80,8 +80,8 @@ router.get("/:user_id/:month", async (req, res) => {
     // SQL 쿼리 실행
     const [results] = await db.query(
       `SELECT SUM(t.tran_amt) AS total_spent
-        FROM Transaction t
-        JOIN Account a ON t.account_id = a.account_id
+        FROM transaction t
+        JOIN account a ON t.account_id = a.account_id
         WHERE a.user_id = ? 
           AND t.inout_type = 'OUT'
           AND DATE(t.transaction_time) >= ?  -- 시작 날짜 (날짜만 비교)
