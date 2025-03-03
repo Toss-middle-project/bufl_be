@@ -28,7 +28,7 @@ router.post("/", async (req, res) => {
     }
 
     const [results] = await db.query(
-      "SELECT * FROM Users WHERE user_regnu = ? OR user_phone = ?",
+      "SELECT * FROM users WHERE user_regnu = ? OR user_phone = ?",
       [userRegnu, userPhone]
     );
     if (results.length > 0) {
@@ -36,7 +36,7 @@ router.post("/", async (req, res) => {
     }
 
     const [result] = await db.query(
-      "INSERT INTO Users (user_name, user_regnu, user_phone, user_password) VALUES (?, ?, ?, ?)",
+      "INSERT INTO users (user_name, user_regnu, user_phone, user_password) VALUES (?, ?, ?, ?)",
       [userName, userRegnu, userPhone, userPassword]
     );
 
@@ -71,7 +71,7 @@ router.post("/login", async (req, res) => {
   try {
     if (userPassword) {
       const [results] = await db.query(
-        "SELECT user_id FROM Users WHERE user_password = ? AND user_phone = ?",
+        "SELECT user_id FROM users WHERE user_password = ? AND user_phone = ?",
         [userPassword, userPhone]
       );
 
@@ -113,7 +113,7 @@ router.post("/salary", async (req, res) => {
     }
 
     const [userResult] = await db.query(
-      "SELECT user_id FROM Account WHERE account_id = ?",
+      "SELECT user_id FROM account WHERE account_id = ?",
       [accountId]
     );
     if (userResult.length === 0) {
@@ -122,7 +122,7 @@ router.post("/salary", async (req, res) => {
     const userId = userResult[0].user_id;
 
     const [salaryResult] = await db.query(
-      "INSERT INTO Salary (account_id, user_id, amount, pay_date, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), NOW())",
+      "INSERT INTO salary (account_id, user_id, amount, pay_date, created_at, updated_at) VALUES (?, ?, ?, ?, NOW(), NOW())",
       [accountId, userId, amount, payDate]
     );
     res.status(201).json({
@@ -135,6 +135,7 @@ router.post("/salary", async (req, res) => {
   }
 });
 
+// 관심사
 router.get("/interests", async (req, res) => {
   try {
     res.json({ message: "관심사 선택 화면입니다." });
@@ -156,7 +157,7 @@ router.post("/interests", async (req, res) => {
     const values = interests.map((interest) => [userId, interest]);
 
     const [insertResult] = await db.query(
-      "INSERT INTO Interests (user_id, name) VALUES ?",
+      "INSERT INTO interests (user_id, name) VALUES ?",
       [values]
     );
 
@@ -164,6 +165,39 @@ router.post("/interests", async (req, res) => {
   } catch (err) {
     console.error("관심사 등록 실패:", err);
     res.status(500).json({ error: "서버 오류" });
+  }
+});
+
+//회원 탈퇴
+router.delete("/delete", async (req, res) => {
+  const userId = req.session.userId;
+
+  if (!userId) {
+    return res.status(401).json({ message: "로그인이 필요합니다." });
+  }
+  try {
+    //1. 연관 데이터 삭제 (월급 정보, 관심사 등)
+    await db.query("DELETE FROM salary WHERE user_id = ?", [userId]);
+    await db.query("DELETE FROM interests WHERE user_id = ?", [userId]);
+
+    const [result] = await db.query("DELETE FROM users WHERE user_id = ?", [
+      userId,
+    ]);
+    // 2. 사용자 계정 삭제
+    if (result.affectedRows === 0) {
+      return res.status(404).json({ message: "회원 정보를 찾을 수 없습니다." });
+    }
+    // 3. 세션 삭제
+    req.session.destroy((err) => {
+      if (err) {
+        console.error("세션 삭제 오류:", err);
+        return res.status(500).json({ message: "세션 삭제 실패" });
+      }
+      res.json({ message: "회원 탈퇴 완료" });
+    });
+  } catch (err) {
+    console.error("회원 탈퇴 오류:", err);
+    res.status(500).json({ message: "서버 오류" });
   }
 });
 
