@@ -139,7 +139,7 @@ router.get("/:user_id/:goal_id/detail", async (req, res) => {
 
     // 목표 달성률 계산
     const completionRate =
-      goalAmount > 0 ? ((currentAmount / goalAmount) * 100).toFixed(2) : 0; // 소수점 2자리 처리
+      goalAmount > 0 ? Math.round((currentAmount / goalAmount) * 100) : 0;
 
     // 응답 데이터
     res.status(200).json({
@@ -148,7 +148,7 @@ router.get("/:user_id/:goal_id/detail", async (req, res) => {
       progress: {
         현재저축액: currentAmount.toFixed(2), // 소수점 2자리 처리
         남은저축액: remainingAmount.toFixed(2), // 소수점 2자리 처리
-        달성율: completionRate, // 소수점 2자리 처리
+        달성율: `${completionRate}%`, // 소수점 2자리 처리
       },
       저축목록: depositResult.map((deposit) => ({
         deposit_date: deposit.deposit_date,
