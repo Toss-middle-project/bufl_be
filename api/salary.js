@@ -4,18 +4,18 @@ const router = express.Router();
 const db = require("../db/db");
 
 router.get("/category", async (req, res) => {
-  // const userId = req.session.user_id;
-  const userId = 43;
+  const userId = req.session.userId;
+  // const userId = 44;
   if (!userId) {
     res.json.status(400).json({ message: "로그인이 필요합니다." });
   }
   try {
     const [salaryAccount] = await db.query(
-      "SELECT bank_name, account_number FROM Account WHERE account_id = (SELECT account_id FROM Salary WHERE user_id = ?)",
+      "SELECT bank_name, account_number FROM account WHERE account_id = (SELECT account_id FROM salary WHERE user_id = ?)",
       [userId]
     );
     const [categories] = await db.query(
-      "SELECT name, goal_amount, background_color, ratio, amount FROM Categories WHERE user_id = ?",
+      "SELECT name, goal_amount, background_color, ratio, amount FROM categories WHERE user_id = ?",
       [userId]
     );
 
@@ -41,8 +41,8 @@ router.get("/category", async (req, res) => {
 });
 
 router.post("/category", async (req, res) => {
-  // const userId = req.session.user_id;
-  const userId = 43;
+  const userId = req.session.userId;
+  // const userId = 44;
   const categories = req.body;
 
   if (!Array.isArray(categories) || categories.length === 0) {
@@ -61,7 +61,7 @@ router.post("/category", async (req, res) => {
     }
 
     const [salary] = await db.query(
-      "SELECT amount FROM Salary WHERE user_id = ?",
+      "SELECT amount FROM salary WHERE user_id = ?",
       [userId]
     );
     if (salary.length === 0) {
@@ -83,7 +83,7 @@ router.post("/category", async (req, res) => {
     });
 
     const [result] = await db.query(
-      "INSERT INTO Categories (user_id, name, goal_amount, background_color, ratio, amount) VALUES ?",
+      "INSERT INTO categories (user_id, name, goal_amount, background_color, ratio, amount) VALUES ?",
       [values]
     );
 
@@ -96,11 +96,11 @@ router.post("/category", async (req, res) => {
   }
 });
 
-router.delete("category/:id", async (req, res) => {
+router.delete("/category/:id", async (req, res) => {
   try {
     const categoryId = req.params.id;
 
-    const [category] = await db.query("SELECT * FROM Categories WHERE id = ?", [
+    const [category] = await db.query("SELECT * FROM categories WHERE id = ?", [
       categoryId,
     ]);
 
@@ -108,7 +108,7 @@ router.delete("category/:id", async (req, res) => {
       return res.status(400).json({ message: "카테고리가 없습니다." });
     }
 
-    const [result] = await db.query("DELETE FROM Categories WHERE id =?", [
+    const [result] = await db.query("DELETE FROM categories WHERE id =?", [
       categoryId,
     ]);
 
