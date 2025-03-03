@@ -3,12 +3,14 @@ const db = require("../db/db");
 const router = express.Router();
 
 // 목표 생성하기
-router.post("/", async (req, res) => {
-  const { goal_name, goal_amount, goal_duration, userId } = req.body;
+router.post("/:user_id", async (req, res) => {
+  const { user_id } = req.params; // user_id는 URL 파라미터에서 가져옵니다.
+  const { goal_name, goal_amount, goal_duration, account_id } = req.body; // account_id도 body에서 받아옵니다.
 
-  if (!goal_name || !goal_amount || !goal_duration || !userId) {
+  if (!goal_name || !goal_amount || !goal_duration || !account_id) {
     return res.status(400).json({ message: "모든 필드를 입력해야 합니다." });
   }
+
   // goal_start는 현재 날짜
   const goal_start = new Date();
 
@@ -18,26 +20,42 @@ router.post("/", async (req, res) => {
 
   try {
     const [result] = await db.execute(
-      `INSERT INTO goal (goal_name, goal_amount, goal_duration, goal_start, goal_end, userId) 
-       VALUES (?, ?, ?, ?, ?, ?)`,
-      [goal_name, goal_amount, goal_duration, goal_start, goal_end, userId]
+      `INSERT INTO goal (goal_name, goal_amount, goal_duration, goal_start, goal_end, user_id, account_id) 
+       VALUES (?, ?, ?, ?, ?, ?, ?)`, // user_id와 account_id를 추가
+      [
+        goal_name,
+        goal_amount,
+        goal_duration,
+        goal_start,
+        goal_end,
+        user_id,
+        account_id,
+      ]
     );
-    res.status(201).json({ message: "목표생성 성공", goalId: result.insertId });
+    res
+      .status(201)
+      .json({ message: "목표 생성 성공", goalId: result.insertId });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "서버 오류" });
   }
 });
 
-// 전체 목표 내역
-router.get("/", async (req, res) => {
+// 특정 사용자 목표 내역
+router.get("/:user_id", async (req, res) => {
+  const { user_id } = req.params; // URL 파라미터에서 user_id 가져오기
+
   try {
-    // 사용자가 생성한 모든 목표내역 가져오기
-    const [results] = await db.query(`SELECT * FROM Goal`);
+    // 해당 user_id로 생성한 목표 내역만 가져오기
+    const [results] = await db.query(`SELECT * FROM goal WHERE user_id = ?`, [
+      user_id,
+    ]);
+
     if (results.length === 0) {
       res.status(404).json({ message: "목표 내역이 없습니다." });
+    } else {
+      res.status(200).json({ message: "목표 내역", goals: results });
     }
-    res.status(200).json({ message: "목표 내역", goals: results });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "서버 오류" });
@@ -45,23 +63,22 @@ router.get("/", async (req, res) => {
 });
 
 // 사용자별 목표내역
-router.get("/:user_id", async (req, res) => {
+router.get("/:user_id/:goal_id", async (req, res) => {
   const { user_id } = req.params;
   try {
     // 사용자가 생성한 모든 목표내역 가져오기
-    const [results] = await db.query(`SELECT * FROM goal WHERE userId=?`, [
+    const [results] = await db.query(`SELECT * FROM goal WHERE user_id=?`, [
       user_id,
     ]);
     if (results.length === 0) {
       res.status(404).json({ message: "목표 내역이 없습니다." });
     }
-    res.status(200).json({ message: `${user_id}목표 내역`, goals: results });
+    res.status(200).json({ message: `${user_id}의 목표 내역`, goals: results });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "서버 오류" });
   }
 });
-
 // 목표 상세내역
 router.get("/:user_id/:goal_id", async (req, res) => {
   const { user_id, goal_id } = req.params;
@@ -69,7 +86,7 @@ router.get("/:user_id/:goal_id", async (req, res) => {
   try {
     // 사용자 및 목표에 대한 정보 조회
     const [goalResult] = await db.query(
-      `SELECT * FROM goal WHERE goal_id = ? AND userId = ?`,
+      `SELECT * FROM goal WHERE goal_id = ? AND user_id = ?`,
       [goal_id, user_id]
     );
 
@@ -86,15 +103,14 @@ router.get("/:user_id/:goal_id", async (req, res) => {
   }
 });
 
-// 목표상세 입금내역
-// 목표 상세 내역
+// 목표 상세내역 수정된 URL
 router.get("/:user_id/:goal_id/detail", async (req, res) => {
   const { user_id, goal_id } = req.params;
 
   try {
     // 사용자 및 목표에 대한 정보 조회
     const [goalResult] = await db.query(
-      `SELECT * FROM goal WHERE goal_id = ? AND userId = ?`,
+      `SELECT * FROM goal WHERE goal_id = ? AND user_id = ?`,
       [goal_id, user_id]
     );
 
@@ -103,7 +119,7 @@ router.get("/:user_id/:goal_id/detail", async (req, res) => {
     }
 
     const goal = goalResult[0];
-    const goalAmount = goal.goal_amount;
+    const goalAmount = parseFloat(goal.goal_amount); // goal_amount를 숫자로 변환
 
     // 입금 내역 조회
     const [depositResult] = await db.query(
@@ -115,30 +131,29 @@ router.get("/:user_id/:goal_id/detail", async (req, res) => {
 
     // 입금 내역의 총합 계산 (deposit_amount를 숫자로 변환)
     const currentAmount = depositResult.reduce((acc, deposit) => {
-      // deposit_amount를 숫자로 변환하여 누적 합계 계산
-      return acc + (parseFloat(deposit.deposit_amount) || 0); // 값이 NaN일 경우 0으로 처리
+      return acc + (parseFloat(deposit.deposit_amount) || 0);
     }, 0);
 
     // 남은 금액 계산
-    const remainingAmount = Math.max(0, goalAmount - currentAmount); // 음수 방지
+    const remainingAmount = Math.max(0, goalAmount - currentAmount);
 
-    // 목표 달성률 계산 (목표 금액을 0으로 나누지 않도록 처리)
+    // 목표 달성률 계산
     const completionRate =
-      goalAmount > 0 ? (currentAmount / goalAmount) * 100 : 0;
+      goalAmount > 0 ? ((currentAmount / goalAmount) * 100).toFixed(2) : 0; // 소수점 2자리 처리
 
     // 응답 데이터
     res.status(200).json({
       message: "목표 상세 내역 조회 성공",
       goal: goal,
       progress: {
-        현재저축액: currentAmount, // 소수점 2자리까지 표시
-        남은저축액: remainingAmount,
-        달성율: completionRate, // 소수점 2자리까지 표시
+        현재저축액: currentAmount.toFixed(2), // 소수점 2자리 처리
+        남은저축액: remainingAmount.toFixed(2), // 소수점 2자리 처리
+        달성율: completionRate, // 소수점 2자리 처리
       },
       저축목록: depositResult.map((deposit) => ({
         deposit_date: deposit.deposit_date,
-        deposit_amount: parseFloat(deposit.deposit_amount), // deposit_amount를 숫자로 변환하고 소수점 2자리까지 표시
-        cumulative_amount: parseFloat(deposit.cumulative_amount), // cumulative_amount도 숫자 처리
+        deposit_amount: parseFloat(deposit.deposit_amount).toFixed(2), // 소수점 2자리 처리
+        cumulative_amount: parseFloat(deposit.cumulative_amount).toFixed(2), // 소수점 2자리 처리
       })),
     });
   } catch (err) {
