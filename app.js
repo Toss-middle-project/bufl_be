@@ -4,6 +4,8 @@ const db = require("./db/db"); // DB 설정 파일
 const usersRouter = require("./api/users"); // 사용자 라우터 가져오기
 const accountRouter = require("./api/account"); // 계좌목록 가져오기
 const salaryRouter = require("./api/salary");
+const expensesRouter = require("./api/expenses"); // 소비내역 가져오기
+const goalRouter = require("./api/goal"); // 목표
 const session = require("express-session");
 
 const app = express();
@@ -24,6 +26,8 @@ app.use(
 app.use("/api/users", usersRouter); // 라우터 등록
 app.use("/api/accounts", accountRouter); // 라우터 등록
 app.use("/api/salary", salaryRouter); // 라우터 등록
+app.use("/api/expenses", expensesRouter); // 라우터 등록
+app.use("/api/goals", goalRouter); // 라우터 등록
 
 app.get("/", async (req, res) => {
   try {
