@@ -3,6 +3,7 @@ const session = require("express-session");
 const router = express.Router();
 const db = require("../db/db");
 
+//카테고리 목록 조회
 router.get("/category", async (req, res) => {
   const userId = req.session.userId;
   // const userId = 44;
@@ -40,9 +41,25 @@ router.get("/category", async (req, res) => {
   }
 });
 
+//카테고리 단건 조회
+router.get("/category/:id", async (req, res) => {
+  const categoryId = req.params.id;
+  try {
+    const [category] = await db.query("SELECT * FROM categories WHERE id = ?", [
+      categoryId,
+    ]);
+
+    res.status(200).json({ category });
+  } catch (err) {
+    console.error("월급쪼개기 화면 오류", err);
+    res.status(500).json({ message: "서버 오류" });
+  }
+});
+
+// 카테고리 추가
 router.post("/category", async (req, res) => {
-  const userId = req.session.userId;
-  // const userId = 44;
+  // const userId = req.session.userId;
+  const userId = 44;
   const categories = req.body;
 
   if (!Array.isArray(categories) || categories.length === 0) {
@@ -96,6 +113,7 @@ router.post("/category", async (req, res) => {
   }
 });
 
+//카테고리 삭제
 router.delete("/category/:id", async (req, res) => {
   try {
     const categoryId = req.params.id;
@@ -115,6 +133,75 @@ router.delete("/category/:id", async (req, res) => {
     res.status(200).json({ message: "카테고리 삭제 성공" });
   } catch (err) {
     console.error("카테고리 삭제 오류:", err);
+    res.status(500).json({ message: "서버 오류" });
+  }
+});
+
+//카테고리 - 계좌 연동
+router.post("/account", async (req, res) => {
+  const { categoryId, accountId } = req.body;
+
+  if (!accountId) {
+    return res.status(400).json({ message: "계좌정보를 입력하세요" });
+  }
+  try {
+    const [result] = await db.query(
+      "UPDATE categories SET account_id = ? WHERE id = ? ",
+      [accountId, categoryId]
+    );
+
+    res.status(200).json({ message: "계좌 연동 성공" });
+  } catch (err) {
+    console.error("계좌 연동 오류:", err);
+    res.status(500).json({ message: "서버 오류" });
+  }
+});
+
+// 카테고리 - 연동계좌 목록
+router.get("/account", async (req, res) => {
+  const userId = 44;
+  try {
+    const [categories] = await db.query(
+      "SELECT name, account_id FROM categories WHERE user_id = ?",
+      [userId]
+    );
+
+    const [salaryAccount] = await db.query(
+      "SELECT bank_name, account_number FROM account WHERE account_id = (SELECT account_id FROM salary WHERE user_id = ?)",
+      [userId]
+    );
+
+    if (categories.length === 0) {
+      return res.status(404).json({ message: "카테고리가 없습니다." });
+    }
+
+    const categoryAccounts = await Promise.all(
+      categories.map(async (category) => {
+        if (category.name === "월급 통장") {
+          return {
+            name: category.name,
+            bank_name: salaryAccount.length ? salaryAccount[0].bank_name : null,
+            account_number: salaryAccount.length
+              ? salaryAccount[0].account_number
+              : null,
+          };
+        }
+        const [account] = await db.query(
+          "SELECT bank_name, account_number FROM account WHERE account_id = ?",
+          [category.account_id]
+        );
+
+        return {
+          name: category.name,
+          bankName: account[0]?.bank_name || "정보 없음",
+          accountNumber: account[0]?.account_number || "정보 없음",
+        };
+      })
+    );
+
+    res.status(200).json(categoryAccounts);
+  } catch (err) {
+    console.error("계좌 정보 조회 오류:", err);
     res.status(500).json({ message: "서버 오류" });
   }
 });
