@@ -4,6 +4,18 @@ const router = express.Router();
 const db = require("../db/db");
 
 // 시작 화면
+/**
+ * @swagger
+ * /api/users:
+ *   get:
+ *     summary: "시작 화면"
+ *     description: "시작 화면을 표시합니다."
+ *     responses:
+ *       200:
+ *         description: "성공적으로 시작 화면을 반환합니다."
+ *       500:
+ *         description: "서버 오류"
+ */
 router.get("/", async (req, res) => {
   try {
     res.json({ message: "시작 화면입니다." });
@@ -14,6 +26,40 @@ router.get("/", async (req, res) => {
 });
 
 // 회원가입 로직
+/**
+ * @swagger
+ * /api/users:
+ *   post:
+ *     summary: "회원가입"
+ *     description: "새 사용자를 회원가입합니다."
+ *     parameters:
+ *       - in: body
+ *         name: user
+ *         description: "회원가입에 필요한 사용자 정보"
+ *         required: true
+ *         schema:
+ *           type: object
+ *           properties:
+ *             userName:
+ *               type: string
+ *               example: "이순자"
+ *             userRegnu:
+ *               type: string
+ *               example: "600818-1218896"
+ *             userPhone:
+ *               type: string
+ *               example: "010-5698-4879"
+ *             userPassword:
+ *               type: string
+ *               example: "600818"
+ *     responses:
+ *       201:
+ *         description: "회원가입 성공"
+ *       400:
+ *         description: "잘못된 요청 (모든 정보를 입력하세요.)"
+ *       500:
+ *         description: "서버 오류"
+ */
 router.post("/", async (req, res) => {
   const { userName, userRegnu, userPhone, userPassword } = req.body;
   try {
@@ -54,6 +100,18 @@ router.post("/", async (req, res) => {
 });
 
 // PiN 번호 입력 화면
+/**
+ * @swagger
+ * /api/users/login:
+ *   get:
+ *     summary: "PIN 번호 입력 화면"
+ *     description: "로그인 화면을 반환합니다."
+ *     responses:
+ *       200:
+ *         description: "PIN 번호 화면을 반환합니다."
+ *       500:
+ *         description: "서버 오류"
+ */
 router.get("/login", async (req, res) => {
   try {
     res.json({ message: "PIN 번호 화면입니다." });
@@ -64,6 +122,31 @@ router.get("/login", async (req, res) => {
 });
 
 // PIN번호 로직
+/**
+ * @swagger
+ * /api/users/login:
+ *   post:
+ *     summary: "로그인"
+ *     description: "사용자가 PIN 번호를 입력하여 로그인합니다."
+ *     parameters:
+ *       - in: body
+ *         name: userPassword
+ *         description: "사용자가 입력한 PIN 번호"
+ *         required: true
+ *         schema:
+ *           type: object
+ *           properties:
+ *             userPassword:
+ *               type: string
+ *               example: "600818"
+ *     responses:
+ *       201:
+ *         description: "로그인 성공"
+ *       400:
+ *         description: "로그인 정보가 일치하지 않습니다."
+ *       500:
+ *         description: "서버 오류"
+ */
 router.post("/login", async (req, res) => {
   const { userPassword } = req.body;
   const userPhone = req.session.user.userPhone;

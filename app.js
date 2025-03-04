@@ -1,6 +1,7 @@
 const express = require("express");
 const cors = require("cors");
 const db = require("./db/db"); // DB 설정 파일
+const { specs, swaggerUi } = require("./swaggerConfig"); // swagger 설정
 const usersRouter = require("./api/users"); // 사용자 라우터 가져오기
 const accountRouter = require("./api/account"); // 계좌목록 가져오기
 const salaryRouter = require("./api/salary");
@@ -13,6 +14,7 @@ const port = 5000;
 
 app.use(cors());
 app.use(express.json());
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
 
 app.use(
   session({
@@ -45,5 +47,6 @@ app.get("/", async (req, res) => {
 });
 
 app.listen(port, () => {
-  console.log(`Server running on port ${port}`);
+  console.log("✅ 서버 실행 중: http://localhost:5000");
+  console.log("📄 Swagger 문서: http://localhost:5000/api-docs");
 });
