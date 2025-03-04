@@ -3,12 +3,19 @@ const session = require("express-session");
 const router = express.Router();
 const db = require("../db/db");
 
+/**
+ * @swagger
+ * tags:
+ *   - name: Users
+ *     description: 회원관련 API
+ */
 // 시작 화면
 /**
  * @swagger
  * /api/users:
  *   get:
  *     summary: "시작 화면"
+ *     tags: [Users]
  *     description: "시작 화면을 표시합니다."
  *     responses:
  *       200:
@@ -31,6 +38,7 @@ router.get("/", async (req, res) => {
  * /api/users:
  *   post:
  *     summary: "회원가입"
+ *     tags: [Users]
  *     description: "새 사용자를 회원가입합니다."
  *     parameters:
  *       - in: body
@@ -105,6 +113,7 @@ router.post("/", async (req, res) => {
  * /api/users/login:
  *   get:
  *     summary: "PIN 번호 입력 화면"
+ *     tags: [Users]
  *     description: "로그인 화면을 반환합니다."
  *     responses:
  *       200:
@@ -127,6 +136,7 @@ router.get("/login", async (req, res) => {
  * /api/users/login:
  *   post:
  *     summary: "로그인"
+ *     tags: [Users]
  *     description: "사용자가 PIN 번호를 입력하여 로그인합니다."
  *     parameters:
  *       - in: body

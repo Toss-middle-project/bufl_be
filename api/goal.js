@@ -2,10 +2,62 @@ express = require("express");
 const db = require("../db/db");
 const router = express.Router();
 
+/**
+ * @swagger
+ * tags:
+ *   name: Goals
+ *   description: 저축 목표 관련 API
+ */
+
+/**
+ * @swagger
+ * /api/goals:
+ *   post:
+ *     summary: 새로운 저축 목표 생성
+ *     tags: [Goals]
+ *     description: 사용자가 새로운 저축 목표를 생성합니다.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               goal_name:
+ *                 type: string
+ *                 example: "해외여행"
+ *               goal_amount:
+ *                 type: number
+ *                 example: 1000000
+ *               goal_duration:
+ *                 type: integer
+ *                 example: 12
+ *               account_id:
+ *                 type: integer
+ *                 example: 1
+ *     responses:
+ *       201:
+ *         description: 목표 생성 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "목표 생성 성공"
+ *                 goalId:
+ *                   type: integer
+ *                   example: 1
+ *       400:
+ *         description: 요청 데이터 오류
+ *       500:
+ *         description: 서버 오류
+ */
 // 목표 생성하기
 router.post("/", async (req, res) => {
-  // const userId = req.session.user_id;
-  const userId = 1;
+  const userId = req.session.user_id;
+  // const userId = 1;
   if (!userId) {
     return res.status(400).json({ message: "로그인이 필요합니다." });
   }
@@ -45,10 +97,47 @@ router.post("/", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/goals:
+ *   get:
+ *     summary: 특정 사용자의 목표 목록 조회
+ *     tags: [Goals]
+ *     description: 사용자가 설정한 모든 저축 목표를 조회합니다.
+ *     responses:
+ *       200:
+ *         description: 목표 목록 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "목표 내역"
+ *                 goals:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       goal_id:
+ *                         type: integer
+ *                         example: 1
+ *                       goal_name:
+ *                         type: string
+ *                         example: "해외여행"
+ *                       goal_amount:
+ *                         type: number
+ *                         example: 1000000
+ *       404:
+ *         description: 목표 내역이 없습니다.
+ *       500:
+ *         description: 서버 오류
+ */
 // 특정 사용자 목표 내역
 router.get("/", async (req, res) => {
-  // const userId = req.session.user_id;
-  const userId = 1;
+  const userId = req.session.user_id;
+  // const userId = 1;
   if (!userId) {
     return res.status(400).json({ message: "로그인이 필요합니다." });
   }
@@ -69,11 +158,55 @@ router.get("/", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/goals/{goal_id}:
+ *   get:
+ *     summary: 특정 목표 상세 조회
+ *     tags: [Goals]
+ *     description: 특정 목표의 상세 정보를 조회합니다.
+ *     parameters:
+ *       - in: path
+ *         name: goal_id
+ *         required: true
+ *         description: 조회할 목표 ID
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *     responses:
+ *       200:
+ *         description: 목표 상세 정보 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "1의 1목표 정보 조회 성공"
+ *                 goal:
+ *                   type: object
+ *                   properties:
+ *                     goal_id:
+ *                       type: integer
+ *                       example: 1
+ *                     goal_name:
+ *                       type: string
+ *                       example: "해외여행"
+ *                     goal_amount:
+ *                       type: number
+ *                       example: 1000000
+ *       404:
+ *         description: 목표를 찾을 수 없습니다.
+ *       500:
+ *         description: 서버 오류
+ */
+
 // 목표 상세내역
 router.get("/:goal_id", async (req, res) => {
   const { goal_id } = req.params;
-  // const userId = req.session.user_id;
-  const userId = 1;
+  const userId = req.session.user_id;
+  // const userId = 1;
   if (!userId) {
     return res.status(400).json({ message: "로그인이 필요합니다." });
   }
@@ -96,12 +229,78 @@ router.get("/:goal_id", async (req, res) => {
     res.status(500).json({ message: "서버 오류" });
   }
 });
+/**
+ * @swagger
+ * /api/goals/{goal_id}/detail:
+ *   get:
+ *     summary: 특정 목표의 저축 진행률 및 입금 내역 조회
+ *     tags: [Goals]
+ *     description: 특정 목표의 저축 진행 상태 및 입금 내역을 조회합니다.
+ *     parameters:
+ *       - in: path
+ *         name: goal_id
+ *         required: true
+ *         description: 조회할 목표 ID
+ *         schema:
+ *           type: integer
+ *           example: 1
+ *     responses:
+ *       200:
+ *         description: 목표 상세 내역 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "목표 상세 내역 조회 성공"
+ *                 goal:
+ *                   type: object
+ *                   properties:
+ *                     goal_id:
+ *                       type: integer
+ *                       example: 1
+ *                     goal_name:
+ *                       type: string
+ *                       example: "해외여행"
+ *                 progress:
+ *                   type: object
+ *                   properties:
+ *                     현재저축액:
+ *                       type: string
+ *                       example: "500000.00"
+ *                     남은저축액:
+ *                       type: string
+ *                       example: "500000.00"
+ *                     달성율:
+ *                       type: string
+ *                       example: "50%"
+ *                 저축목록:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       deposit_date:
+ *                         type: string
+ *                         example: "2024-03-01"
+ *                       deposit_amount:
+ *                         type: string
+ *                         example: "200000.00"
+ *                       cumulative_amount:
+ *                         type: string
+ *                         example: "500000.00"
+ *       404:
+ *         description: 목표를 찾을 수 없습니다.
+ *       500:
+ *         description: 서버 오류
+ */
 
-// 목표 상세내역 수정된 URL
+// 목표 상세내역
 router.get("/:goal_id/detail", async (req, res) => {
   const { goal_id } = req.params;
-  // const userId = req.session.user_id;
-  const userId = 1;
+  const userId = req.session.user_id;
+  // const userId = 1;
   if (!userId) {
     return res.status(400).json({ message: "로그인이 필요합니다." });
   }
