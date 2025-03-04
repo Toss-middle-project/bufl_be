@@ -3,8 +3,12 @@ const db = require("../db/db");
 const router = express.Router();
 
 // 목표 생성하기
-router.post("/:user_id", async (req, res) => {
-  const { user_id } = req.params; // user_id는 URL 파라미터에서 가져옵니다.
+router.post("/", async (req, res) => {
+  // const userId = req.session.user_id;
+  const userId = 1;
+  if (!userId) {
+    return res.status(400).json({ message: "로그인이 필요합니다." });
+  }
   const { goal_name, goal_amount, goal_duration, account_id } = req.body; // account_id도 body에서 받아옵니다.
 
   if (!goal_name || !goal_amount || !goal_duration || !account_id) {
@@ -28,7 +32,7 @@ router.post("/:user_id", async (req, res) => {
         goal_duration,
         goal_start,
         goal_end,
-        user_id,
+        userId,
         account_id,
       ]
     );
@@ -42,13 +46,16 @@ router.post("/:user_id", async (req, res) => {
 });
 
 // 특정 사용자 목표 내역
-router.get("/:user_id", async (req, res) => {
-  const { user_id } = req.params; // URL 파라미터에서 user_id 가져오기
-
+router.get("/", async (req, res) => {
+  // const userId = req.session.user_id;
+  const userId = 1;
+  if (!userId) {
+    return res.status(400).json({ message: "로그인이 필요합니다." });
+  }
   try {
     // 해당 user_id로 생성한 목표 내역만 가져오기
     const [results] = await db.query(`SELECT * FROM goal WHERE user_id = ?`, [
-      user_id,
+      userId,
     ]);
 
     if (results.length === 0) {
@@ -63,21 +70,25 @@ router.get("/:user_id", async (req, res) => {
 });
 
 // 목표 상세내역
-router.get("/:user_id/:goal_id", async (req, res) => {
-  const { user_id, goal_id } = req.params;
-
+router.get("/:goal_id", async (req, res) => {
+  const { goal_id } = req.params;
+  // const userId = req.session.user_id;
+  const userId = 1;
+  if (!userId) {
+    return res.status(400).json({ message: "로그인이 필요합니다." });
+  }
   try {
     // 사용자 및 목표에 대한 정보 조회
     const [goalResult] = await db.query(
       `SELECT * FROM goal WHERE goal_id = ? AND user_id = ?`,
-      [goal_id, user_id]
+      [goal_id, userId]
     );
 
     if (goalResult.length === 0) {
       return res.status(404).json({ message: "목표를 찾을 수 없습니다." });
     }
     res.status(200).json({
-      message: `${user_id}의 ${goal_id}목표 정보 조회 성공`,
+      message: `${userId}의 ${goal_id}목표 정보 조회 성공`,
       goal: goalResult[0],
     });
   } catch (err) {
@@ -87,14 +98,18 @@ router.get("/:user_id/:goal_id", async (req, res) => {
 });
 
 // 목표 상세내역 수정된 URL
-router.get("/:user_id/:goal_id/detail", async (req, res) => {
-  const { user_id, goal_id } = req.params;
-
+router.get("/:goal_id/detail", async (req, res) => {
+  const { goal_id } = req.params;
+  // const userId = req.session.user_id;
+  const userId = 1;
+  if (!userId) {
+    return res.status(400).json({ message: "로그인이 필요합니다." });
+  }
   try {
     // 사용자 및 목표에 대한 정보 조회
     const [goalResult] = await db.query(
       `SELECT * FROM goal WHERE goal_id = ? AND user_id = ?`,
-      [goal_id, user_id]
+      [goal_id, userId]
     );
 
     if (goalResult.length === 0) {

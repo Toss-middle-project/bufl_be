@@ -3,34 +3,37 @@ const router = express.Router();
 const db = require("../db/db");
 
 // 계좌 목록 조회 API
-router.get("/", async (req, res) => {
-  try {
-    const [results] = await db.query("SELECT * FROM account");
-    if (results.length === 0) {
-      return res.status(404).json({ message: "등록된 계좌가 없습니다." });
-    }
-    res.status(200).json({ message: "계좌목록 조회 성공", accounts: results });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ message: "서버오류" });
-  }
-});
+// router.get("/", async (req, res) => {
+//   try {
+//     const [results] = await db.query("SELECT * FROM account");
+//     if (results.length === 0) {
+//       return res.status(404).json({ message: "등록된 계좌가 없습니다." });
+//     }
+//     res.status(200).json({ message: "계좌목록 조회 성공", accounts: results });
+//   } catch (err) {
+//     console.log(err);
+//     res.status(500).json({ message: "서버오류" });
+//   }
+// });
 
 //아이디별 목록 조회
-router.get("/:user_id", async (req, res) => {
-  const { user_id } = req.params; //URL에서 user_id 가져오기
-
+router.get("/", async (req, res) => {
+  // const userId = req.session.user_id;
+  const userId = 1;
+  if (!userId) {
+    return res.status(400).json({ message: "로그인이 필요합니다." });
+  }
   try {
     const [results] = await db.query(
       "SELECT * FROM account WHERE user_id = ?",
-      [user_id]
+      [userId]
     );
     if (results.length == 0) {
       return res.status(404).json({ message: "해당 사용자 계좌가 없습니다." });
     }
     res
       .status(200)
-      .json({ message: `${user_id}의 계좌목록`, accounts: results });
+      .json({ message: `${userId}의 계좌목록`, accounts: results });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "서버오류" });
