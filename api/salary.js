@@ -3,10 +3,54 @@ const session = require("express-session");
 const router = express.Router();
 const db = require("../db/db");
 
-//카테고리 목록 조회
+/**
+ * @swagger
+ * tags:
+ *   name: Category
+ *   description: 카테고리 관련 API
+ */
+
+/**
+ * @swagger
+ * /category:
+ *   get:
+ *     summary: 카테고리 목록 조회
+ *     description: 로그인한 사용자의 카테고리 목록을 조회합니다.
+ *     tags: [Category]
+ *     responses:
+ *       200:
+ *         description: 카테고리 목록 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 categories:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       name:
+ *                         type: string
+ *                       goal_amount:
+ *                         type: integer
+ *                       background_color:
+ *                         type: string
+ *                       ratio:
+ *                         type: integer
+ *                       amount:
+ *                         type: integer
+ *                       bank_name:
+ *                         type: string
+ *                       account_number:
+ *                         type: string
+ *       400:
+ *         description: 로그인되지 않음
+ *       500:
+ *         description: 서버 오류
+ */
 router.get("/category", async (req, res) => {
   const userId = req.session.userId;
-  // const userId = 44;
   if (!userId) {
     res.json.status(400).json({ message: "로그인이 필요합니다." });
   }
@@ -20,7 +64,6 @@ router.get("/category", async (req, res) => {
       [userId]
     );
 
-    // 반환할 데이터 정리
     const result = categories.map((category) => {
       if (category.name === "월급 통장") {
         return {
@@ -41,7 +84,46 @@ router.get("/category", async (req, res) => {
   }
 });
 
-//카테고리 단건 조회
+/**
+ * @swagger
+ * /category/{id}:
+ *   get:
+ *     summary: 카테고리 단건 조회
+ *     description: 특정 카테고리를 조회합니다.
+ *     tags: [Category]
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         description: 카테고리 ID
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: 카테고리 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 category:
+ *                   type: object
+ *                   properties:
+ *                     id:
+ *                       type: integer
+ *                     name:
+ *                       type: string
+ *                     goal_amount:
+ *                       type: integer
+ *                     background_color:
+ *                       type: string
+ *                     ratio:
+ *                       type: integer
+ *                     amount:
+ *                       type: integer
+ *       500:
+ *         description: 서버 오류
+ */
 router.get("/category/:id", async (req, res) => {
   const categoryId = req.params.id;
   try {
@@ -56,10 +138,41 @@ router.get("/category/:id", async (req, res) => {
   }
 });
 
-// 카테고리 추가
+/**
+ * @swagger
+ * /category:
+ *   post:
+ *     summary: 카테고리 추가
+ *     description: 사용자가 카테고리를 추가합니다.
+ *     tags: [Category]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: array
+ *             items:
+ *               type: object
+ *               properties:
+ *                 name:
+ *                   type: string
+ *                 goal_amount:
+ *                   type: integer
+ *                 background_color:
+ *                   type: string
+ *                 ratio:
+ *                   type: integer
+ *     responses:
+ *       201:
+ *         description: 카테고리 추가 성공
+ *       400:
+ *         description: 입력 값 오류 (카테고리 정보 오류, 비율 합 100% 미만 등)
+ *       500:
+ *         description: 서버 오류
+ */
 router.post("/category", async (req, res) => {
-  // const userId = req.session.userId;
-  const userId = 44;
+  // const userId = 44;
+  const userId = req.session.userId;
   const categories = req.body;
 
   if (!Array.isArray(categories) || categories.length === 0) {
@@ -72,9 +185,7 @@ router.post("/category", async (req, res) => {
     }
 
     if (totalPercentage !== 100) {
-      return res
-        .status(400)
-        .json({ message: "비율합이 100이이 되어야함니다." });
+      return res.status(400).json({ message: "비율합이 100이 되어야 합니다." });
     }
 
     const [salary] = await db.query(
@@ -85,7 +196,6 @@ router.post("/category", async (req, res) => {
       return res.status(400).json({ message: "월급 정보가 없습니다." });
     }
 
-    // 각 카테고리의 amount 계산
     const values = categories.map((category) => {
       const salaryAmount = salary[0]?.amount || 0;
       const amount = (salaryAmount * category.ratio) / 100;
@@ -113,7 +223,28 @@ router.post("/category", async (req, res) => {
   }
 });
 
-//카테고리 삭제
+/**
+ * @swagger
+ * /category/{id}:
+ *   delete:
+ *     summary: 카테고리 삭제
+ *     description: 특정 카테고리를 삭제합니다.
+ *     tags: [Category]
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         description: 카테고리 ID
+ *         required: true
+ *         schema:
+ *           type: integer
+ *     responses:
+ *       200:
+ *         description: 카테고리 삭제 성공
+ *       400:
+ *         description: 해당 카테고리가 존재하지 않음
+ *       500:
+ *         description: 서버 오류
+ */
 router.delete("/category/:id", async (req, res) => {
   try {
     const categoryId = req.params.id;
@@ -137,7 +268,32 @@ router.delete("/category/:id", async (req, res) => {
   }
 });
 
-//카테고리 - 계좌 연동
+/**
+ * @swagger
+ * /account:
+ *   post:
+ *     summary: 계좌 연동
+ *     description: 카테고리에 계좌를 연동합니다.
+ *     tags: [Category]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               categoryId:
+ *                 type: integer
+ *               accountId:
+ *                 type: integer
+ *     responses:
+ *       200:
+ *         description: 계좌 연동 성공
+ *       400:
+ *         description: 계좌 정보 미제공
+ *       500:
+ *         description: 서버 오류
+ */
 router.post("/account", async (req, res) => {
   const { categoryId, accountId } = req.body;
 
@@ -157,9 +313,36 @@ router.post("/account", async (req, res) => {
   }
 });
 
-// 카테고리 - 연동계좌 목록
+/**
+ * @swagger
+ * /account:
+ *   get:
+ *     summary: 연동 계좌 목록 조회
+ *     description: 사용자의 연동된 계좌 목록을 조회합니다.
+ *     tags: [Category]
+ *     responses:
+ *       200:
+ *         description: 계좌 정보 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   name:
+ *                     type: string
+ *                   bankName:
+ *                     type: string
+ *                   accountNumber:
+ *                     type: string
+ *       500:
+ *         description: 서버 오류
+ */
 router.get("/account", async (req, res) => {
-  const userId = 44;
+  // const userId = 44;
+  const userId = req.session.userId;
+
   try {
     const [categories] = await db.query(
       "SELECT name, account_id FROM categories WHERE user_id = ?",

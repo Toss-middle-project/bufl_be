@@ -5,6 +5,35 @@ const db = require("../db/db");
 const schedule = require("node-schedule");
 
 // 자동이체 실행 함수
+/**
+ * @swagger
+ * /transfer:
+ *   post:
+ *     summary: 자동이체 일정 등록
+ *     description: 사용자의 월급통장과 연동된 계좌들로 자동이체 일정 등록
+ *     tags:
+ *       - 자동이체
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userId:
+ *                 type: integer
+ *                 description: 사용자의 ID
+ *                 example: 44
+ *     responses:
+ *       200:
+ *         description: 자동이체 일정 등록 완료
+ *       400:
+ *         description: 월급 계좌 또는 카테고리 정보를 찾을 수 없음
+ *       500:
+ *         description: 서버 오류
+ */
+
+// 자동이체 함수
 async function executeAutoTransfer(
   fromAccountId,
   toAccountId,
@@ -100,10 +129,37 @@ async function executeAutoTransfer(
 }
 
 // 자동이체 일정 등록 API
+/**
+ * @swagger
+ * /transfer:
+ *   post:
+ *     summary: 자동이체 일정 등록
+ *     description: 사용자의 월급통장과 연동된 계좌들로 자동이체 일정 등록
+ *     tags:
+ *       - 자동이체
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userId:
+ *                 type: integer
+ *                 description: 사용자의 ID
+ *                 example: 44
+ *     responses:
+ *       200:
+ *         description: 자동이체 일정 등록 완료
+ *       400:
+ *         description: 월급 계좌 또는 카테고리 정보를 찾을 수 없음
+ *       500:
+ *         description: 서버 오류
+ */
 router.post("/transfer", async (req, res) => {
   try {
-    // const userId = req.session.userId;
-    const userId = 44;
+    const userId = req.session.userId;
+    // const userId = 44;
 
     // 사용자 월급통장 정보 가져오기
     const [fromAccount] = await db.query(
@@ -116,9 +172,6 @@ router.post("/transfer", async (req, res) => {
     }
 
     const fromAccountId = fromAccount[0].account_id;
-
-    // const payDate = new Date(fromAccount[0].pay_date);
-    // payDate.setDate(payDate.getDate() + 1); // 월급날 +1일 후 자동이체
 
     const [categories] = await db.query(
       "SELECT id, amount, account_id FROM categories WHERE user_id = ?",
