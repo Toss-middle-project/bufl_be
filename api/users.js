@@ -177,6 +177,35 @@ router.post("/login", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/users/salary:
+ *   get:
+ *     summary: "월급 정보 입력 화면"
+ *     description: "사용자에게 월급 정보를 입력하는 화면을 반환합니다."
+ *     responses:
+ *       200:
+ *         description: "월급 정보 입력 화면"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "월급 정보 입력 화면입니다."
+ *       500:
+ *         description: "서버 오류"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "서버오류"
+ */
+
 // 월급 정보 입력 화면
 router.get("/salary", async (req, res) => {
   try {
@@ -186,6 +215,75 @@ router.get("/salary", async (req, res) => {
     res.status(500).json({ message: "서버오류" });
   }
 });
+
+/**
+ * @swagger
+ * /api/users/salary:
+ *   post:
+ *     summary: "월급 정보 입력"
+ *     description: "사용자가 월급 정보를 입력하여 DB에 저장합니다."
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               amount:
+ *                 type: number
+ *                 description: "월급 액수"
+ *               payDate:
+ *                 type: string
+ *                 format: date
+ *                 description: "월급 지급일"
+ *               accountId:
+ *                 type: string
+ *                 description: "사용자 계좌 ID"
+ *     responses:
+ *       201:
+ *         description: "월급 정보 입력 성공"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "월급 입력정보 성공"
+ *                 salaryId:
+ *                   type: integer
+ *                   example: 1
+ *       400:
+ *         description: "모든 정보를 입력하지 않음"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "모든 정보를 입력하세요!"
+ *       404:
+ *         description: "계좌를 찾을 수 없음"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Account not found"
+ *       500:
+ *         description: "서버 오류"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "서버 오류"
+ */
 
 // 월급 정보 입력
 router.post("/salary", async (req, res) => {
@@ -219,6 +317,34 @@ router.post("/salary", async (req, res) => {
 });
 
 // 관심사
+/**
+ * @swagger
+ * /api/users/interests:
+ *   get:
+ *     summary: "관심사 선택 화면"
+ *     description: "사용자에게 관심사를 선택할 수 있는 화면을 반환합니다."
+ *     responses:
+ *       200:
+ *         description: "관심사 선택 화면"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "관심사 선택 화면입니다."
+ *       500:
+ *         description: "서버 오류"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "서버오류"
+ */
 router.get("/interests", async (req, res) => {
   try {
     res.json({ message: "관심사 선택 화면입니다." });
@@ -227,6 +353,57 @@ router.get("/interests", async (req, res) => {
     res.status(500).json({ message: "서버오류" });
   }
 });
+
+/**
+ * @swagger
+ * /api/users/interests:
+ *   post:
+ *     summary: "관심사 등록"
+ *     description: "사용자가 선택한 관심사를 등록합니다."
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               interests:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 description: "사용자가 선택한 관심사 목록"
+ *     responses:
+ *       200:
+ *         description: "관심사 등록 성공"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "관심사 등록 성공"
+ *       401:
+ *         description: "로그인이 필요함"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "로그인이 필요합니다."
+ *       500:
+ *         description: "서버 오류"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 error:
+ *                   type: string
+ *                   example: "서버 오류"
+ */
 
 router.post("/interests", async (req, res) => {
   const userId = req.session.userId;
@@ -252,6 +429,54 @@ router.post("/interests", async (req, res) => {
 });
 
 //회원 탈퇴
+/**
+ * @swagger
+ * /api/users/delete:
+ *   delete:
+ *     summary: "회원 탈퇴"
+ *     description: "사용자가 계정을 탈퇴합니다. 탈퇴 시 연관된 모든 데이터를 삭제합니다."
+ *     responses:
+ *       200:
+ *         description: "회원 탈퇴 완료"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "회원 탈퇴 완료"
+ *       401:
+ *         description: "로그인이 필요함"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "로그인이 필요합니다."
+ *       404:
+ *         description: "사용자 정보 찾을 수 없음"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "회원 정보를 찾을 수 없습니다."
+ *       500:
+ *         description: "서버 오류"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "서버 오류"
+ */
 router.delete("/delete", async (req, res) => {
   const userId = req.session.userId;
 

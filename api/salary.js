@@ -12,7 +12,7 @@ const db = require("../db/db");
 
 /**
  * @swagger
- * /category:
+ * /api/salary/category:
  *   get:
  *     summary: 카테고리 목록 조회
  *     description: 로그인한 사용자의 카테고리 목록을 조회합니다.
@@ -86,7 +86,7 @@ router.get("/category", async (req, res) => {
 
 /**
  * @swagger
- * /category/{id}:
+ * /api/salary/category/{id}:
  *   get:
  *     summary: 카테고리 단건 조회
  *     description: 특정 카테고리를 조회합니다.
@@ -140,7 +140,7 @@ router.get("/category/:id", async (req, res) => {
 
 /**
  * @swagger
- * /category:
+ * /api/salary/category:
  *   post:
  *     summary: 카테고리 추가
  *     description: 사용자가 카테고리를 추가합니다.
@@ -225,7 +225,7 @@ router.post("/category", async (req, res) => {
 
 /**
  * @swagger
- * /category/{id}:
+ * /api/salary/category/{id}:
  *   delete:
  *     summary: 카테고리 삭제
  *     description: 특정 카테고리를 삭제합니다.
@@ -270,7 +270,7 @@ router.delete("/category/:id", async (req, res) => {
 
 /**
  * @swagger
- * /account:
+ * /api/salary/account:
  *   post:
  *     summary: 계좌 연동
  *     description: 카테고리에 계좌를 연동합니다.
@@ -315,7 +315,7 @@ router.post("/account", async (req, res) => {
 
 /**
  * @swagger
- * /account:
+ * /api/salary/account:
  *   get:
  *     summary: 연동 계좌 목록 조회
  *     description: 사용자의 연동된 계좌 목록을 조회합니다.

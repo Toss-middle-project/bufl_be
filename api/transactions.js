@@ -4,35 +4,6 @@ const router = express.Router();
 const db = require("../db/db");
 const schedule = require("node-schedule");
 
-// 자동이체 실행 함수
-/**
- * @swagger
- * /transfer:
- *   post:
- *     summary: 자동이체 일정 등록
- *     description: 사용자의 월급통장과 연동된 계좌들로 자동이체 일정 등록
- *     tags:
- *       - 자동이체
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               userId:
- *                 type: integer
- *                 description: 사용자의 ID
- *                 example: 44
- *     responses:
- *       200:
- *         description: 자동이체 일정 등록 완료
- *       400:
- *         description: 월급 계좌 또는 카테고리 정보를 찾을 수 없음
- *       500:
- *         description: 서버 오류
- */
-
 // 자동이체 함수
 async function executeAutoTransfer(
   fromAccountId,
@@ -131,7 +102,7 @@ async function executeAutoTransfer(
 // 자동이체 일정 등록 API
 /**
  * @swagger
- * /transfer:
+ * api/transactions/transfer:
  *   post:
  *     summary: 자동이체 일정 등록
  *     description: 사용자의 월급통장과 연동된 계좌들로 자동이체 일정 등록
