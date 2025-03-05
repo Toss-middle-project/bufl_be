@@ -20,7 +20,7 @@ async function generateMessage() {
       messages: [
         {
           role: "user",
-          content: "저축 목표 한개만 추천",
+          content: "안녕",
         },
       ],
     });
@@ -33,11 +33,4 @@ async function generateMessage() {
   }
 }
 
-// 7. 실행 예시
-async function main() {
-  console.log("=== 기본 메시지 생성 ===");
-  await generateMessage(); // 재시도 로직을 포함한 메시지 생성
-}
-
-// 프로그램 실행
-main().catch(console.error);
+module.exports = { generateMessage };
