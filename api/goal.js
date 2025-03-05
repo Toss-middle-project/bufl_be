@@ -116,12 +116,19 @@ router.post("/", async (req, res) => {
     }
 
     const account = accountResult[0]; // 계좌 정보
-    const goal_name = `${goal_amount}모으기`; // goal_amount를 이용해 goal_name을 동적으로 설정
+    const dynamicGoalName = `${goal_amount}모으기`; // goal_amount를 이용해 goal_name을 동적으로 설정
 
     const [result] = await db.query(
       `INSERT INTO goal (goal_name, goal_amount, goal_duration, goal_start, goal_end, user_id, account_id)
       VALUES (?, ?, ?, CURRENT_TIMESTAMP, DATE_ADD(CURRENT_TIMESTAMP, INTERVAL ? MONTH), ?, ?)`,
-      [goal_name, goal_amount, goal_duration, goal_duration, userId, account_id]
+      [
+        dynamicGoalName,
+        goal_amount,
+        goal_duration,
+        goal_duration,
+        userId,
+        account_id,
+      ]
     );
 
     res.status(201).json({

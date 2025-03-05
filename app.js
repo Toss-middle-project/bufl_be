@@ -9,6 +9,7 @@ const transactionsRouter = require("./api/transactions");
 const expensesRouter = require("./api/expenses"); // 소비내역 가져오기
 const goalRouter = require("./api/goal"); // 목표
 const session = require("express-session");
+const goalaiRouter = require("./api/goalai"); // goalai.js 파일을 가져옴
 
 const app = express();
 const port = 5000;
@@ -25,6 +26,12 @@ app.use(
     cookie: { secure: false }, // https를 사용할 경우 true로 설정
   })
 );
+
+// AI 목표 추천 라우터
+app.use("/api/goalai", goalaiRouter); // 기존의 goalRouter를 사용
+
+// POST /api/goals/generate 요청 처리
+app.post("/api/goals/generate", goalaiRouter.generateAndSaveGoals); // AI 목표 추천 및 저장 처리
 
 app.use("/api/users", usersRouter); // 라우터 등록
 app.use("/api/accounts", accountRouter); // 라우터 등록
