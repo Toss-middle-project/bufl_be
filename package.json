@@ -17,6 +17,7 @@
   },
   "homepage": "https://github.com/Toss-middle-project/bufl_be#readme",
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.39.0",
     "body-parser": "^1.20.3",
     "cors": "^2.8.5",
     "express": "^4.21.2",
