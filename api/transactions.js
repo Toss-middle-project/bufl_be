@@ -102,7 +102,7 @@ async function executeAutoTransfer(
 // 자동이체 일정 등록 API
 /**
  * @swagger
- * api/transactions/transfer:
+ * /api/transactions/transfer:
  *   post:
  *     summary: 자동이체 일정 등록
  *     description: 사용자의 월급통장과 연동된 계좌들로 자동이체 일정 등록
