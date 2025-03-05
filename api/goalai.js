@@ -1,14 +1,14 @@
-// api/goalai.js
 const { Anthropic } = require("@anthropic-ai/sdk");
-require("dotenv").config(); // .env 파일을 로드
+require("dotenv").config();
 const express = require("express");
 const db = require("../db/db");
+
 const router = express.Router();
 
 const apiKey = process.env.ANTHROPIC_API_KEY;
 const anthropic = new Anthropic({ apiKey });
 
-// AI에게 목표 추천을 요청하는 함수
+// AI에게 목표 추천 요청
 async function getGoalRecommendations() {
   try {
     const response = await anthropic.messages.create({
@@ -25,7 +25,6 @@ async function getGoalRecommendations() {
       ],
     });
 
-    // AI 응답을 JSON 객체로 변환하여 반환
     return JSON.parse(response.content);
   } catch (error) {
     console.error("AI 목표 추천 오류:", error);
@@ -33,16 +32,15 @@ async function getGoalRecommendations() {
   }
 }
 
+// 목표를 DB에 저장하는 함수
 async function saveGoalsToDB(goals, userId, accountId) {
   try {
-    // 목표를 DB에 저장하는 쿼리
     for (const goal of goals) {
       const { goal_name, goal_amount, goal_duration, monthly_saving } = goal;
 
-      // 목표를 goal 테이블에 저장
       const [result] = await db.query(
         `INSERT INTO goal (goal_name, goal_amount, goal_duration, goal_start, goal_end, user_id, account_id, monthly_saving)
-         VALUES (?, ?, ?, CURRENT_TIMESTAMP, DATE_ADD(CURRENT_TIMESTAMP, INTERVAL ? MONTH), ?, ?, ?)`,
+         VALUES (?, ?, ?, CURRENT_TIMESTAMP, DATE_ADD(CURRENT_TIMESTAMP, INTERVAL ? MONTH), ?, ?, ?);`,
         [
           goal_name,
           goal_amount,
@@ -64,8 +62,8 @@ async function saveGoalsToDB(goals, userId, accountId) {
   }
 }
 
-// API 요청을 처리하는 함수
-async function generateAndSaveGoals(req, res) {
+// 목표 생성 및 저장 API 엔드포인트 추가
+router.post("/generate-goals", async (req, res) => {
   const userId = req.userId; // 로그인한 사용자 ID
   const accountId = req.body.accountId; // 계좌 ID
 
@@ -76,7 +74,6 @@ async function generateAndSaveGoals(req, res) {
   }
 
   try {
-    // AI에게 목표 추천 요청
     const aiResponse = await getGoalRecommendations();
 
     if (!aiResponse.savings_goals || aiResponse.savings_goals.length === 0) {
@@ -85,10 +82,8 @@ async function generateAndSaveGoals(req, res) {
         .json({ message: "AI에서 추천한 목표가 없습니다." });
     }
 
-    // AI에서 받은 목표를 DB에 저장
     await saveGoalsToDB(aiResponse.savings_goals, userId, accountId);
 
-    // 성공적으로 저장된 후 응답 반환
     res.status(200).json({
       message: "AI 추천 목표가 성공적으로 저장되었습니다.",
       goals: aiResponse.savings_goals,
@@ -99,7 +94,7 @@ async function generateAndSaveGoals(req, res) {
       .status(500)
       .json({ message: "목표 추천 또는 저장 중 오류가 발생했습니다." });
   }
-}
+});
 
-// 모듈 내보내기
-module.exports = { generateAndSaveGoals };
+// 모듈 내보내기 (라우터 내보내기)
+module.exports = router;
