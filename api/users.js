@@ -187,23 +187,37 @@ router.post("/login", async (req, res) => {
   }
 });
 
+// 월급 정보
 /**
  * @swagger
- * /api/users/salary:
+ * /salary:
  *   get:
- *     summary: "월급 정보 입력 화면"
- *     description: "사용자에게 월급 정보를 입력하는 화면을 반환합니다."
+ *     summary: "사용자의 월급 정보 조회"
+ *     description: "로그인된 사용자의 월급 정보(계좌 정보, 금액, 지급일)를 조회합니다."
  *     responses:
  *       200:
- *         description: "월급 정보 입력 화면"
+ *         description: "월급 정보 조회 성공"
  *         content:
  *           application/json:
  *             schema:
  *               type: object
  *               properties:
- *                 message:
+ *                 salaryAccount:
+ *                   type: object
+ *                   properties:
+ *                     bank_name:
+ *                       type: string
+ *                       description: "은행 이름"
+ *                     account_number:
+ *                       type: string
+ *                       description: "계좌 번호"
+ *                 amount:
+ *                   type: number
+ *                   description: "월급 금액"
+ *                 payDate:
  *                   type: string
- *                   example: "월급 정보 입력 화면입니다."
+ *                   format: date
+ *                   description: "월급 지급일 (YYYY-MM-DD 형식)"
  *       500:
  *         description: "서버 오류"
  *         content:
@@ -214,12 +228,42 @@ router.post("/login", async (req, res) => {
  *                 message:
  *                   type: string
  *                   example: "서버오류"
+ *       400:
+ *         description: "잘못된 요청"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "로그인 필요"
+ *     security:
+ *       - bearerAuth: []
  */
-
-// 월급 정보 입력 화면
 router.get("/salary", async (req, res) => {
+  // const userId = req.session.userId;
+  const userId = 44;
+  if (!userId) {
+    return res.json.status(400).json({ message: "로그인이 필요합니다." });
+  }
   try {
-    res.json({ message: "월급 정보 입력 화면입니다." });
+    const [salary] = await db.query(
+      "SELECT account_id, amount, pay_date FROM salary WHERE user_id = ?",
+      [userId]
+    );
+
+    const salaryAccountId = salary[0].account_id;
+    const [salaryAccount] = await db.query(
+      "SELECT bank_name, account_number FROM account WHERE account_id = ?",
+      [salaryAccountId]
+    );
+
+    res.status(200).json({
+      salaryAccount: salaryAccount[0],
+      amount: salary[0].amount,
+      payDate: salary[0].pay_date,
+    });
   } catch (err) {
     console.error("월급 정보 입력 화면 오류", err);
     res.status(500).json({ message: "서버오류" });

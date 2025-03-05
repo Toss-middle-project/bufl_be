@@ -196,4 +196,111 @@ router.post("/transfer", async (req, res) => {
   }
 });
 
+// 자동이체 내역
+/**
+ * @swagger
+ * /api/transactions/history:
+ *   get:
+ *     summary: 자동이체 내역 조회
+ *     description: 로그인한 사용자의 자동이체 내역을 조회합니다. 해당 내역에는 자동이체의 출금 계좌, 입금 계좌, 금액, 잔액, 거래 시간이 포함됩니다.
+ *     tags:
+ *       - 자동이체
+ *     responses:
+ *       '200':
+ *         description: 자동이체 내역 조회 성공
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   fromAccountNumber:
+ *                     type: string
+ *                     description: 출금 계좌 번호
+ *                     example: "123-456-7890"
+ *                   toAccountNumber:
+ *                     type: string
+ *                     description: 입금 계좌 번호
+ *                     example: "098-765-4321"
+ *                   amount:
+ *                     type: number
+ *                     format: float
+ *                     description: 자동이체 금액
+ *                     example: 100000
+ *                   balance:
+ *                     type: number
+ *                     format: float
+ *                     description: 자동이체 후 계좌 잔액
+ *                     example: 500000
+ *                   time:
+ *                     type: string
+ *                     format: date-time
+ *                     description: 자동이체 거래 시간
+ *                     example: "2025-03-05T14:30:00Z"
+ *       '400':
+ *         description: 로그인되지 않은 사용자가 요청한 경우
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "로그인이 필요합니다."
+ *       '500':
+ *         description: 서버 오류
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "서버 오류"
+ */
+
+router.get("/history", async (req, res) => {
+  // const userId = req.session.userId;
+  const userId = 44;
+
+  if (!userId) {
+    return res.status(400).json({ message: "로그인이 필요합니다." });
+  }
+  try {
+    const [salaryAccount] = await db.query(
+      "SELECT * FROM salary WHERE user_id = ?",
+      [userId]
+    );
+
+    const fromAccountId = salaryAccount[0].account_id;
+
+    const [fromAccout] = await db.query(
+      "SELECT * FROM account WHERE account_id = ?",
+      [fromAccountId]
+    );
+    const fromAccountNumber = fromAccout[0].account_number;
+
+    const [histories] = await db.query(
+      "SELECT * FROM transaction WHERE from_account_number = ? AND inout_type = 'OUT' AND tran_desc = '자동이체'",
+      [fromAccountNumber]
+    );
+
+    const result = histories.map((history) => {
+      return {
+        fromAccountNumber: fromAccountNumber,
+        toAccountNumber: history.to_account_number,
+        amount: history.tran_amt,
+        balance: history.tran_balance_amt,
+        time: history.transaction_time,
+      };
+    });
+
+    res.status(200).json(result);
+  } catch (err) {
+    console.error("자동이체 내역 조회 오류:", err);
+    res.status(500).json({ message: "서버 오류" });
+  }
+});
+
 module.exports = router;
