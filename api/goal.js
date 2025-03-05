@@ -13,7 +13,9 @@ function calculateGoalCompletionProbability(
   const monthsRemaining = goal_duration - elapsed_months;
   if (monthsRemaining <= 0) return 100;
   const probability = (current_amount / goal_amount) * 100;
-  return probability > 100 ? 100 : probability;
+
+  // 소수점 두 자리로 제한
+  return probability > 100 ? 100 : probability.toFixed(2);
 }
 
 // 경과된 월 수 계산
