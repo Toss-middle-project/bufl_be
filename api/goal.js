@@ -52,7 +52,7 @@ function getElapsedMonths(goal_start) {
  *             properties:
  *               goal_name:
  *                 type: string
- *                 description: "저축 목표 이름"
+ *                 description: "${goal_amount}모으기"
  *               goal_amount:
  *                 type: number
  *                 format: float
@@ -90,17 +90,16 @@ function getElapsedMonths(goal_start) {
  *       500:
  *         description: "서버 오류"
  */
-
-// 목표 설정 API
 router.post("/", async (req, res) => {
-  const userId = 1;
+  const userId = req.session.user_id;
+  // const userId = 1;
   if (!userId) {
     return res.status(400).json({ message: "로그인을 해주세요." });
   }
 
-  const { goal_name, goal_amount, goal_duration, account_id } = req.body;
+  const { monthly_saving, goal_duration, account_id } = req.body;
 
-  if (!account_id || !goal_name || !goal_amount || !goal_duration) {
+  if (!account_id || !monthly_saving || !goal_duration) {
     return res.status(400).json({ message: "모든 필드를 입력해주세요." });
   }
 
@@ -117,10 +116,22 @@ router.post("/", async (req, res) => {
 
     const account = accountResult[0]; // 계좌 정보
 
+    // 목표 금액을 계산 (월 저축액 * 기간)
+    const goal_amount = monthly_saving * goal_duration;
+    const dynamicGoalName = `${goal_amount} 모으기`; // goal_name을 그대로 사용
+
     const [result] = await db.query(
-      `INSERT INTO goal (goal_name, goal_amount, goal_duration, goal_start, goal_end, user_id, account_id)
-      VALUES (?, ?, ?, CURRENT_TIMESTAMP, DATE_ADD(CURRENT_TIMESTAMP, INTERVAL ? MONTH), ?, ?)`,
-      [goal_name, goal_amount, goal_duration, goal_duration, userId, account_id]
+      `INSERT INTO goal (goal_name, goal_amount, goal_duration, goal_start, goal_end, user_id, account_id, monthly_saving)
+      VALUES (?, ?, ?, CURRENT_TIMESTAMP, DATE_ADD(CURRENT_TIMESTAMP, INTERVAL ? MONTH), ?, ?, ?)`,
+      [
+        dynamicGoalName,
+        goal_amount,
+        goal_duration,
+        goal_duration,
+        userId,
+        account_id,
+        monthly_saving,
+      ]
     );
 
     res.status(201).json({
@@ -188,8 +199,8 @@ router.post("/", async (req, res) => {
 
 // 목표 조회 API
 router.get("/", async (req, res) => {
-  const userId = 3;
-
+  const userId = req.session.user_id;
+  // const userId = 1;
   if (!userId) {
     return res.status(400).json({ message: "로그인이 필요합니다." });
   }

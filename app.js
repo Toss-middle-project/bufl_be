@@ -10,6 +10,7 @@ const expensesRouter = require("./api/expenses"); // 소비내역 가져오기
 const goalRouter = require("./api/goal"); // 목표
 const salaryaiRouter = require("./api/salaryai");
 const session = require("express-session");
+const goalAI = require("./api/goalai"); // goalai.js에서 router 가져오기
 
 const app = express();
 const port = 5000;
@@ -34,6 +35,7 @@ app.use("/api/transactions", transactionsRouter);
 app.use("/api/expenses", expensesRouter); // 라우터 등록
 app.use("/api/goals", goalRouter); // 라우터 등록
 app.use("/api/salaryai", salaryaiRouter);
+app.use("/api/goalai", goalAI); // 라우터 등록
 
 app.get("/", async (req, res) => {
   try {

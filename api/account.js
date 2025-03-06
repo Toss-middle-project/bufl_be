@@ -78,8 +78,8 @@ const db = require("../db/db");
  */
 
 router.get("/", async (req, res) => {
-  // const userId = req.session.user_id; // 로그인된 사용자의 user_id
-  const userId = 44;
+  const userId = req.session.user_id; // 로그인된 사용자의 user_id
+  // const userId = 44;
   if (!userId) {
     return res.status(400).json({ message: "로그인이 필요합니다." });
   }
@@ -180,8 +180,8 @@ router.get("/", async (req, res) => {
  */
 router.get("/:account_id/transactions", async (req, res) => {
   const { account_id } = req.params; // URL 파라미터에서 account_id 가져오기
-  // const userId = req.session.user_id; // 로그인된 사용자의 user_id
-  const userId = 44;
+  const userId = req.session.user_id; // 로그인된 사용자의 user_id
+  // const userId = 44;
   if (!userId) {
     return res.status(400).json({ message: "로그인이 필요합니다." });
   }
