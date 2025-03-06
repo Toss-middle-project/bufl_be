@@ -1,5 +1,5 @@
 const { Anthropic } = require("@anthropic-ai/sdk");
-require("dotenv").config();
+require("dotenv").config("../.env");
 const express = require("express");
 const db = require("../db/db");
 
@@ -7,7 +7,6 @@ const router = express.Router();
 
 const apiKey = process.env.ANTHROPIC_API_KEY;
 const anthropic = new Anthropic({ apiKey });
-
 // AI에게 목표 추천 요청
 async function getGoalRecommendations() {
   try {
@@ -25,144 +24,44 @@ async function getGoalRecommendations() {
       ],
     });
 
-    return JSON.parse(response.content);
+    // 응답 내용 확인
+    console.log("AI 응답 내용:", response);
+
+    // JSON 파싱 (응답 내용이 JSON 형식이라면 바로 파싱)
+    const parsedResponse = JSON.parse(response.content[0].text); // 응답이 JSON 문자열이라고 가정
+    console.log("파싱된 응답:", parsedResponse);
+
+    return parsedResponse;
   } catch (error) {
-    console.error("AI 목표 추천 오류:", error);
-    throw new Error("AI 목표 추천 실패");
+    console.error("AI 목표 추천 오류:", error.message);
+    throw new Error("AI 목표 추천 실패: " + error.message);
   }
 }
-
-// 목표를 DB에 저장하는 함수
-async function saveGoalsToDB(goals, userId, accountId) {
+// AI 추천 목표 목록 가져오기 (GET)
+router.get("/generate-goals", async (req, res) => {
   try {
-    for (const goal of goals) {
-      const { goal_name, goal_amount, goal_duration, monthly_saving } = goal;
-
-      const [result] = await db.query(
-        `INSERT INTO goalta (goal_name, goal_amount, goal_duration, goal_start, goal_end, user_id, account_id, monthly_saving)
-         VALUES (?, ?, ?, CURRENT_TIMESTAMP, DATE_ADD(CURRENT_TIMESTAMP, INTERVAL ? MONTH), ?, ?, ?);`,
-        [
-          goal_name,
-          goal_amount,
-          goal_duration,
-          goal_duration,
-          userId,
-          accountId,
-          monthly_saving,
-        ]
-      );
-
-      console.log(
-        `목표 "${goal_name}"이 성공적으로 저장되었습니다. (ID: ${result.insertId})`
-      );
-    }
-  } catch (error) {
-    console.error("DB 저장 오류:", error);
-    throw new Error("목표 저장 실패");
-  }
-}
-
-// 목표 직접 설정 및 저장 API 엔드포인트 추가
-router.post("/set-goal", async (req, res) => {
-  const userId = req.userId; // 로그인한 사용자 ID
-  const accountId = req.body.accountId; // 계좌 ID
-  const { goalName, goalAmount, goalDuration, monthlySaving } = req.body; // 사용자 입력 값
-
-  if (
-    !userId ||
-    !accountId ||
-    !goalName ||
-    !goalAmount ||
-    !goalDuration ||
-    !monthlySaving
-  ) {
-    return res.status(400).json({
-      message:
-        "필수 정보가 누락되었습니다. (목표 이름, 금액, 기간, 월별 저축액)",
-    });
-  }
-
-  try {
-    // 목표 시작일은 현재 시간으로 설정
-    const goalStart = new Date();
-    // 목표 종료일은 시작일에 목표 기간을 더한 날짜로 설정
-    const goalEnd = new Date(goalStart);
-    goalEnd.setMonth(goalEnd.getMonth() + goalDuration); // 기간을 더해 목표 종료일 계산
-
-    // 목표 DB에 저장
-    const [result] = await db.query(
-      `INSERT INTO goalta (goal_name, goal_amount, goal_duration, goal_start, goal_end, user_id, account_id, monthly_saving)
-         VALUES (?, ?, ?, CURRENT_TIMESTAMP, DATE_ADD(CURRENT_TIMESTAMP, INTERVAL ? MONTH), ?, ?, ?);`,
-
-      [
-        goalName,
-        goalAmount,
-        goalDuration,
-        goalStart,
-        goalEnd,
-        userId,
-        accountId,
-        monthlySaving,
-      ]
-    );
-
-    res.status(200).json({
-      message: `"${goalName}" 목표가 성공적으로 생성되었습니다.`,
-      goal: {
-        goal_name: goalName,
-        goal_amount: goalAmount,
-        goal_duration: goalDuration,
-        monthly_saving: monthlySaving,
-        goal_start: goalStart,
-        goal_end: goalEnd,
-      },
-    });
-  } catch (error) {
-    console.error("DB 저장 오류:", error);
-    res.status(500).json({ message: "목표 저장 중 오류가 발생했습니다." });
-  }
-});
-
-// 목표 생성 및 저장 API 엔드포인트 추가
-router.post("/generate-goals", async (req, res) => {
-  const userId = req.userId; // 로그인한 사용자 ID
-  const accountId = req.body.accountId; // 계좌 ID
-  const selectedGoalIndex = req.body.selectedGoalIndex; // 사용자가 선택한 목표 인덱스 (0부터 시작)
-
-  if (!userId || !accountId || selectedGoalIndex === undefined) {
-    return res.status(400).json({
-      message: "사용자, 계좌 정보 또는 선택된 목표가 누락되었습니다.",
-    });
-  }
-
-  try {
+    // AI로부터 목표 추천을 받아옵니다.
     const aiResponse = await getGoalRecommendations();
 
-    if (!aiResponse.savings_goals || aiResponse.savings_goals.length === 0) {
+    if (
+      !aiResponse.recommendations ||
+      aiResponse.recommendations.length === 0
+    ) {
       return res
         .status(400)
         .json({ message: "AI에서 추천한 목표가 없습니다." });
     }
 
-    const selectedGoal = aiResponse.savings_goals[selectedGoalIndex];
-
-    if (!selectedGoal) {
-      return res
-        .status(400)
-        .json({ message: "선택된 목표가 유효하지 않습니다." });
-    }
-
-    await saveGoalsToDB([selectedGoal], userId, accountId); // 선택된 목표만 저장
-
+    // AI 추천 목표 목록을 응답으로 반환
     res.status(200).json({
-      message: "선택된 목표가 성공적으로 저장되었습니다.",
-      goal: selectedGoal,
+      message: "AI 추천 목표 목록을 성공적으로 가져왔습니다.",
+      recommendations: aiResponse.recommendations, // AI 추천 목표 목록
     });
   } catch (error) {
-    console.error("AI 목표 추천 또는 DB 저장 실패:", error);
+    console.error("AI 추천 목표 목록 가져오기 실패:", error);
     res
       .status(500)
-      .json({ message: "목표 추천 또는 저장 중 오류가 발생했습니다." });
+      .json({ message: "목표 추천 목록을 가져오는 중 오류가 발생했습니다." });
   }
 });
 
