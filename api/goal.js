@@ -90,17 +90,15 @@ function getElapsedMonths(goal_start) {
  *       500:
  *         description: "서버 오류"
  */
-
-// 목표 설정 API
 router.post("/", async (req, res) => {
   const userId = 1;
   if (!userId) {
     return res.status(400).json({ message: "로그인을 해주세요." });
   }
 
-  const { goal_name, goal_amount, goal_duration, account_id } = req.body;
+  const { monthly_saving, goal_duration, account_id } = req.body;
 
-  if (!account_id || !goal_name || !goal_amount || !goal_duration) {
+  if (!account_id || !monthly_saving || !goal_duration) {
     return res.status(400).json({ message: "모든 필드를 입력해주세요." });
   }
 
@@ -116,11 +114,14 @@ router.post("/", async (req, res) => {
     }
 
     const account = accountResult[0]; // 계좌 정보
-    const dynamicGoalName = `${goal_amount}모으기`; // goal_amount를 이용해 goal_name을 동적으로 설정
+
+    // 목표 금액을 계산 (월 저축액 * 기간)
+    const goal_amount = monthly_saving * goal_duration;
+    const dynamicGoalName = `${goal_amount} 모으기`; // goal_name을 그대로 사용
 
     const [result] = await db.query(
-      `INSERT INTO goal (goal_name, goal_amount, goal_duration, goal_start, goal_end, user_id, account_id)
-      VALUES (?, ?, ?, CURRENT_TIMESTAMP, DATE_ADD(CURRENT_TIMESTAMP, INTERVAL ? MONTH), ?, ?)`,
+      `INSERT INTO goal (goal_name, goal_amount, goal_duration, goal_start, goal_end, user_id, account_id, monthly_saving)
+      VALUES (?, ?, ?, CURRENT_TIMESTAMP, DATE_ADD(CURRENT_TIMESTAMP, INTERVAL ? MONTH), ?, ?, ?)`,
       [
         dynamicGoalName,
         goal_amount,
@@ -128,6 +129,7 @@ router.post("/", async (req, res) => {
         goal_duration,
         userId,
         account_id,
+        monthly_saving,
       ]
     );
 
@@ -140,6 +142,105 @@ router.post("/", async (req, res) => {
   } catch (err) {
     console.error("목표 설정 오류:", err);
     res.status(500).json({ message: "서버 오류" });
+  }
+});
+
+// AI 추천 목표 목록 가져오기 (GET)
+router.get("/generate-goals", async (req, res) => {
+  try {
+    // AI로부터 목표 추천을 받아옵니다.
+    const aiResponse = await getGoalRecommendations();
+
+    if (!aiResponse.savings_goals || aiResponse.savings_goals.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "AI에서 추천한 목표가 없습니다." });
+    }
+
+    // AI 추천 목표 목록을 응답으로 반환
+    res.status(200).json({
+      message: "AI 추천 목표 목록을 성공적으로 가져왔습니다.",
+      savings_goals: aiResponse.savings_goals, // AI 추천 목표 목록
+    });
+  } catch (error) {
+    console.error("AI 추천 목표 목록 가져오기 실패:", error);
+    res
+      .status(500)
+      .json({ message: "목표 추천 목록을 가져오는 중 오류가 발생했습니다." });
+  }
+});
+
+// ai 추천 목표 생성
+router.post("/generate-goals", async (req, res) => {
+  // const userId = req.session.userId; // 로그인한 사용자 ID
+  // const accountId = req.body.accountId; // 계좌 ID
+  const userId = 1;
+  const accountId = 33;
+  const selectedGoalIndex = req.body.selectedGoalIndex; // 사용자가 선택한 목표 인덱스 (0부터 시작)
+
+  if (!userId || !accountId || selectedGoalIndex === undefined) {
+    return res.status(400).json({
+      message: "사용자, 계좌 정보 또는 선택된 목표가 누락되었습니다.",
+    });
+  }
+
+  try {
+    const aiResponse = await getGoalRecommendations();
+
+    if (!aiResponse.savings_goals || aiResponse.savings_goals.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "AI에서 추천한 목표가 없습니다." });
+    }
+
+    const selectedGoal = aiResponse.savings_goals[selectedGoalIndex];
+
+    if (!selectedGoal) {
+      return res
+        .status(400)
+        .json({ message: "선택된 목표가 유효하지 않습니다." });
+    }
+
+    // 목표 금액 자동 설정 (예: 목표 금액을 300만원으로 설정)
+    const { goal_name, goal_amount, goal_duration, monthly_saving } =
+      selectedGoal;
+
+    // 목표 금액을 기준으로 월별 저축액을 계산하거나 설정할 수 있음
+    const calculatedMonthlySaving = Math.ceil(goal_amount / goal_duration);
+
+    // 월별 저축액이 5만원 단위로 설정되도록 함
+    const roundedMonthlySaving =
+      Math.floor(calculatedMonthlySaving / 50000) * 50000;
+
+    // 목표 금액 및 월별 저축액 업데이트
+    const [result] = await db.query(
+      `INSERT INTO goalta (goal_name, goal_amount, goal_duration, goal_start, goal_end, user_id, account_id, monthly_saving)
+       VALUES (?, ?, ?, CURRENT_TIMESTAMP, DATE_ADD(CURRENT_TIMESTAMP, INTERVAL ? MONTH), ?, ?, ?);`,
+      [
+        goal_name,
+        goal_amount,
+        goal_duration,
+        goal_duration,
+        userId,
+        accountId,
+        monthly_saving,
+        roundedMonthlySaving, // 자동 설정된 월별 저축액 사용
+      ]
+    );
+
+    console.log(
+      `목표 "${goal_name}"이 성공적으로 저장되었습니다. (ID: ${result.insertId})`
+    );
+
+    res.status(200).json({
+      message: "선택된 목표가 성공적으로 저장되었습니다.",
+      goal: selectedGoal,
+    });
+  } catch (error) {
+    console.error("AI 목표 추천 또는 DB 저장 실패:", error);
+    res
+      .status(500)
+      .json({ message: "목표 추천 또는 저장 중 오류가 발생했습니다." });
   }
 });
 
@@ -196,7 +297,7 @@ router.post("/", async (req, res) => {
 
 // 목표 조회 API
 router.get("/", async (req, res) => {
-  const userId = 3;
+  const userId = 1;
 
   if (!userId) {
     return res.status(400).json({ message: "로그인이 필요합니다." });
