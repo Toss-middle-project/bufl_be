@@ -10,7 +10,7 @@ const anthropic = new Anthropic({
   apiKey: apiKey,
 });
 
-async function ConsumptionPattern(transactions) {
+async function consumptionPattern(transactions) {
   try {
     const transactionSummary = transactions.map((transaction) => {
       return {
@@ -55,9 +55,137 @@ async function ConsumptionPattern(transactions) {
   }
 }
 
+async function recommendRatio(salary, interests, transactions) {
+  try {
+    const interestSummary = interests.map((interest) => {
+      return {
+        interest: interest.name,
+      };
+    });
+
+    // const analysisSummary = await consumptionPattern(transactions);
+
+    const response = await anthropic.messages.create({
+      model: "claude-3-7-sonnet-20250219",
+      max_tokens: 1000,
+      temperature: 0.7,
+      system: "당신은 사용자의 통장쪼개기 비율을 추천하는 도우미 입니다.",
+      messages: [
+        {
+          role: "user",
+          content: `사용자의 관심사와 소비 패턴을 분석하여 통장(월급)쪼개기를 위한 카테고리와 비율(월급통장 포함)을 JSON 형식으로만 응답
+  
+          관심사: ${JSON.stringify(interestSummary)}
+          소비습관(소비패턴) : ${JSON.stringify(transactions)}
+          사용자 월급 : ${salary}
+          응답에 다음 구조를 사용하세요. JSON 형식으로만 응답하시오. 줄바꿈 문자을 넣지 말고, 줄바꿈하지 마시오.
+          {
+            "recommendRatio": [
+              {
+                "name": "저축",
+                "ratio": "30",
+                "amount" : ""
+              },
+              {
+                "name": "생활비",
+                "ratio": "40",
+                "amount" : ""
+              },
+              { 
+                "name": "제태크", 
+                "ratio": "30", 
+                "amount" : ""
+              } 
+            ]
+          }`,
+        },
+      ],
+    });
+
+    const parsedResponse = JSON.parse(response.content[0].text);
+
+    console.log(parsedResponse);
+    return parsedResponse;
+  } catch (err) {
+    console.error("에러 발생:", err);
+  }
+}
+
+router.get("/recommend", async (req, res) => {
+  const userId = req.session.userId;
+  // const userId = 1;
+  if (!userId) {
+    return res.status(400).json({ message: "로그인이 필요합니다." });
+  }
+  try {
+    const [interests] = await db.query(
+      "SELECT * FROM interests WHERE user_id = ?",
+      [userId]
+    );
+    // const [transactions] = await db.query(
+    //   "SELECT * FROM transaction WHERE account_id IN (SELECT account_id FROM account WHERE user_id = ?) AND inout_type = 'OUT'",
+    //   [userId]
+    // );
+
+    const [salaryInfo] = await db.query(
+      "SELECT * FROM salary WHERE user_id = ?",
+      [userId]
+    );
+
+    const salary = salaryInfo[0].amount;
+    const transactions = req.session.analysisResult;
+    const recommendResult = await recommendRatio(
+      salary,
+      interests,
+      transactions
+    );
+
+    delete req.session.transactions;
+    req.session.recommendResult = recommendResult.recommendRatio;
+
+    res.send(recommendResult);
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+router.post("/recommend", async (req, res) => {
+  const userId = req.session.userId;
+  // const userId = 1;
+  try {
+    const recommendResult = req.session.recommendResult;
+    console.log(recommendResult);
+
+    const values = recommendResult.map((category) => {
+      return [
+        userId,
+        category.name,
+        category.goal_amount || 0,
+        category.background_color || "#DAEBF8",
+        category.ratio,
+        category.amount,
+      ];
+    });
+
+    const [result] = await db.query(
+      "INSERT INTO categories (user_id, name, goal_amount, background_color, ratio, amount) VALUES ?",
+      [values]
+    );
+
+    delete req.session.recommendResult;
+
+    res.status(201).json({
+      message: `${recommendResult.length}개의 카테고리가 추가되었습니다.`,
+    });
+  } catch (err) {
+    console.error("카테고리 추가 오류:", err);
+    res.status(500).json({ message: "서버 오류" });
+  }
+});
+
 router.get("/", async (req, res) => {
-  // const userId = req.session.userId;
-  const userId = 1;
+  const userId = req.session.userId;
+  // const userId = 1;
 
   if (!userId) {
     return res.status(400).send("로그인이 필요합니다.");
@@ -74,7 +202,9 @@ router.get("/", async (req, res) => {
         .json({ success: false, message: "거래내역이 없습니다." });
     }
 
-    const analysisResult = await ConsumptionPattern(transactions);
+    const analysisResult = await consumptionPattern(transactions);
+    req.session.analysisResult = analysisResult;
+
     res.send(analysisResult);
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
