@@ -143,6 +143,7 @@ router.post("/transfer", async (req, res) => {
     }
 
     const fromAccountId = fromAccount[0].account_id;
+    const payDate = fromAccount[0].pay_date;
 
     const [categories] = await db.query(
       "SELECT id, amount, account_id FROM categories WHERE user_id = ?",
