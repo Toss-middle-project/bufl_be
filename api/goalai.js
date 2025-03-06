@@ -48,6 +48,11 @@ async function getGoalRecommendations(req) {
 }
 // AI 추천 목표 목록 가져오기 (GET)
 router.get("/", async (req, res) => {
+  const userId = req.session.user_id;
+  // const userId = 1;
+  if (!userId) {
+    return res.status(400).json({ message: "로그인이 필요합니다." });
+  }
   try {
     // AI로부터 목표 추천을 받아옵니다.
     const aiResponse = await getGoalRecommendations(req);
@@ -72,8 +77,12 @@ router.get("/", async (req, res) => {
 });
 
 router.post("/generate-goals", async (req, res) => {
-  const userId = 1;
-  const accountId = 33;
+  const userId = req.session.user_id;
+  const accountId = req.session.account_id;
+  // const userId = 1;
+  if (!userId) {
+    return res.status(400).json({ message: "로그인이 필요합니다." });
+  }
   const aiResponse = await getGoalRecommendations(req);
   const selectedGoalIndex = req.body.selectedGoalIndex;
 

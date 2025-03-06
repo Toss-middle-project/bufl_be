@@ -91,7 +91,8 @@ function getElapsedMonths(goal_start) {
  *         description: "서버 오류"
  */
 router.post("/", async (req, res) => {
-  const userId = 1;
+  const userId = req.session.user_id;
+  // const userId = 1;
   if (!userId) {
     return res.status(400).json({ message: "로그인을 해주세요." });
   }
@@ -198,8 +199,8 @@ router.post("/", async (req, res) => {
 
 // 목표 조회 API
 router.get("/", async (req, res) => {
-  const userId = 1;
-
+  const userId = req.session.user_id;
+  // const userId = 1;
   if (!userId) {
     return res.status(400).json({ message: "로그인이 필요합니다." });
   }
