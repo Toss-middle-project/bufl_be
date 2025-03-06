@@ -262,8 +262,8 @@ router.post("/transfer", async (req, res) => {
  */
 
 router.get("/history", async (req, res) => {
-  // const userId = req.session.userId;
-  const userId = 44;
+  const userId = req.session.userId;
+  // const userId = 44;
 
   if (!userId) {
     return res.status(400).json({ message: "로그인이 필요합니다." });
