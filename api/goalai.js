@@ -29,7 +29,23 @@ async function getGoalRecommendations(req) {
       messages: [
         {
           role: "user",
-          content: `저축 목표를 추천해주세요. 목표 금액은 50만원에서 300만원 사이로 설정하고, 기간은 3개월에서 36개월 사이로 설정해주세요. 각 목표에 대해 5개 정도의 추천 목표를 생성해주세요. 각 목표의 goal_name, goal_amount, goal_duration, monthly_saving을 포함하는 JSON 형식으로 제공해주세요.`,
+          content: `저축 목표를 추천해주세요. 목표 금액은 50만원에서 300만원 사이로 설정하고, 기간은 3개월에서 36개월 사이로 설정해주세요.
+           각 목표에 대해 5개 정도의 추천 목표를 생성해주세요.
+           형식은 예를들어
+           recommendations: [
+              {
+                goal_name: '여행 자금 마련',
+                goal_amount: 800000,
+                goal_duration: 3,
+                monthly_saving: 250000
+              },
+              {
+                goal_name: '겨울 패딩 구매',
+                goal_amount: 500000,
+                goal_duration: 5,
+                monthly_saving: 100000
+              }
+           로 JSON 형식으로 제공해주세요.`,
         },
       ],
     });
@@ -78,16 +94,16 @@ router.get("/", async (req, res) => {
 
 router.post("/generate-goals", async (req, res) => {
   const userId = req.session.user_id;
-  const accountId = req.session.account_id;
   // const userId = 1;
   if (!userId) {
     return res.status(400).json({ message: "로그인이 필요합니다." });
   }
   const aiResponse = await getGoalRecommendations(req);
   const selectedGoalIndex = req.body.selectedGoalIndex;
+  const accountId = req.body.accountId;
 
-  // aiResponse에서 savings_goals 배열을 사용하도록 변경
-  const goals = aiResponse.savings_goals;
+  // aiResponse에서 recommendations 배열을 사용하도록 변경
+  const goals = aiResponse.recommendations;
 
   console.log("selectedGoalIndex:", selectedGoalIndex); // 디버깅: 인덱스 값 확인
   console.log("Goals Length:", goals.length); // 디버깅: AI 추천 목표 목록 길이 확인
