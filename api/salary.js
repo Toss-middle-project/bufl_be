@@ -50,8 +50,8 @@ const db = require("../db/db");
  *         description: 서버 오류
  */
 router.get("/category", async (req, res) => {
-  // const userId = req.session.userId;
-  const userId = 44;
+  const userId = req.session.userId;
+  // const userId = 1;
   if (!userId) {
     res.json.status(400).json({ message: "로그인이 필요합니다." });
   }
@@ -172,8 +172,8 @@ router.get("/category/:id", async (req, res) => {
  *         description: 서버 오류
  */
 router.post("/category", async (req, res) => {
-  const userId = 44;
-  // const userId = req.session.userId;
+  // const userId = 44;
+  const userId = req.session.userId;
   const categories = req.body;
 
   if (!Array.isArray(categories) || categories.length === 0) {
@@ -341,8 +341,8 @@ router.post("/account", async (req, res) => {
  *         description: 서버 오류
  */
 router.get("/account", async (req, res) => {
-  const userId = 44;
-  // const userId = req.session.userId;
+  // const userId = 44;
+  const userId = req.session.userId;
 
   try {
     const [categories] = await db.query(

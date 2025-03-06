@@ -242,8 +242,8 @@ router.post("/login", async (req, res) => {
  *       - bearerAuth: []
  */
 router.get("/salary", async (req, res) => {
-  // const userId = req.session.userId;
-  const userId = 44;
+  const userId = req.session.userId;
+  // const userId = 44;
   if (!userId) {
     return res.json.status(400).json({ message: "로그인이 필요합니다." });
   }
@@ -460,6 +460,7 @@ router.get("/interests", async (req, res) => {
  */
 
 router.post("/interests", async (req, res) => {
+  // const userId = 1;
   const userId = req.session.userId;
   const { interests } = req.body;
 
