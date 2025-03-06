@@ -79,6 +79,7 @@ async function recommendRatio(salary, interests, transactions) {
           소비습관(소비패턴) : ${JSON.stringify(transactions)}
           사용자 월급 : ${salary}
           응답에 다음 구조를 사용하세요. JSON 형식으로만 응답하시오. 줄바꿈 문자을 넣지 말고, 줄바꿈하지 마시오.
+          월급통장은 name을 "월급 통장"으로만 쓰시오.
           {
             "recommendRatio": [
               {
