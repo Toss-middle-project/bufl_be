@@ -1,6 +1,7 @@
 const express = require("express");
 const db = require("../db/db");
 const router = express.Router();
+const schedule = require("node-schedule");
 
 // 목표 달성 확률 계산 함수
 function calculateGoalCompletionProbability(
@@ -91,11 +92,9 @@ function getElapsedMonths(goal_start) {
  *         description: "서버 오류"
  */
 router.post("/", async (req, res) => {
-  const userId = req.session.user_id;
-  // const userId = 1;
-  if (!userId) {
-    return res.status(400).json({ message: "로그인을 해주세요." });
-  }
+  const sessionId = req.cookies.sessionId;
+  if (!sessionId) return res.status(401).json({ message: "세션 없음" });
+  // session 에서 user_id 추출
 
   const { monthly_saving, goal_duration, account_id } = req.body;
 
@@ -104,6 +103,15 @@ router.post("/", async (req, res) => {
   }
 
   try {
+    const [session] = await db.query(
+      "SELECT user_id FROM sessions WHERE session_id = ?",
+      [sessionId]
+    );
+    //session  없으면 만료
+    if (session.length === 0)
+      return res.status(401).json({ message: "세션 만료됨" });
+    //user 정보
+    const userId = session[0].user_id;
     // 계좌 정보 조회 (account_id에 해당하는 계좌 번호 및 잔액 포함)
     const [accountResult] = await db.query(
       `SELECT account_number FROM account WHERE account_id = ? AND user_id = ?`,
@@ -199,13 +207,19 @@ router.post("/", async (req, res) => {
 
 // 목표 조회 API
 router.get("/", async (req, res) => {
-  const userId = req.session.user_id;
-  // const userId = 1;
-  if (!userId) {
-    return res.status(400).json({ message: "로그인이 필요합니다." });
-  }
+  const sessionId = req.cookies.sessionId;
+  if (!sessionId) return res.status(401).json({ message: "세션 없음" });
 
   try {
+    const [session] = await db.query(
+      "SELECT user_id FROM sessions WHERE session_id = ?",
+      [sessionId]
+    );
+    //session  없으면 만료
+    if (session.length === 0)
+      return res.status(401).json({ message: "세션 만료됨" });
+    //user 정보
+    const userId = session[0].user_id;
     const [results] = await db.query(`SELECT * FROM goal WHERE user_id = ?`, [
       userId,
     ]);
@@ -384,42 +398,79 @@ router.post("/:goal_id/deposit", async (req, res) => {
   }
 });
 
-//목표저축 입금내역
-router.get("/:goal_id/transactions", async (req, res) => {
-  const { goal_id } = req.params;
+router.post("/:goal_id/auto-transfer", async (req, res) => {
+  const { goal_id } = req.params; // 요청된 goal_id 가져오기
+  console.log(`🔄 목표 ID ${goal_id} 자동이체 실행 요청 받음...`);
 
   try {
-    // 목표 확인 쿼리
-    const [goalResult] = await db.query(
-      `SELECT goal_name FROM goal WHERE goal_id = ?`,
+    // 특정 목표 조회
+    const [goals] = await db.query(
+      `SELECT g.goal_id, g.account_id, g.monthly_saving, g.goal_name, g.goal_start, a.account_number, a.balance 
+       FROM goal g
+       JOIN account a ON g.account_id = a.account_id
+       WHERE g.goal_id = ? 
+       AND g.goal_end >= CURRENT_DATE 
+       AND DAY(g.goal_start) = DAY(CURRENT_DATE)`,
       [goal_id]
     );
-    if (goalResult.length === 0) {
+
+    if (goals.length === 0) {
       return res
         .status(404)
-        .json({ message: "해당 목표가 존재하지 않습니다." });
+        .json({ message: "자동이체 대상 목표를 찾을 수 없습니다." });
     }
 
-    // 목표에 대한 입금 내역 조회
-    const [transactionResult] = await db.query(
-      `SELECT t.tran_amt, t.tran_balance_amt, t.tran_desc, t.transaction_time
-      FROM transaction t
-      WHERE t.to_account_number = ? AND t.tran_desc = '목표저축'
-      ORDER BY t.transaction_time DESC`,
-      [goalResult[0].goal_name]
-    );
+    let successCount = 0;
+    let failCount = 0;
 
-    // 결과가 없을 경우 처리
-    if (transactionResult.length === 0) {
-      return res
-        .status(404)
-        .json({ message: "해당 목표에 입금된 내역이 없습니다." });
+    for (const goal of goals) {
+      const {
+        account_id,
+        monthly_saving,
+        goal_name,
+        goal_start,
+        account_number,
+        balance,
+      } = goal;
+
+      // 계좌 잔액 확인
+      if (balance < monthly_saving) {
+        console.warn(`❌ 목표 ID ${goal_id}: 계좌 잔액 부족! 자동이체 실패`);
+        failCount++;
+        continue;
+      }
+
+      // 출금 트랜잭션 추가
+      const [result] = await db.query(
+        `INSERT INTO transaction (account_id, from_account_number, to_account_number, inout_type, tran_amt, tran_balance_amt, tran_desc)
+         VALUES (?, ?, ?, 'OUT', ?, ?, ?)`,
+        [
+          account_id,
+          account_number,
+          goal_name,
+          monthly_saving,
+          balance - monthly_saving,
+          "목표 저축",
+        ]
+      );
+
+      // 계좌 잔액 업데이트
+      await db.query(
+        `UPDATE account SET balance = balance - ? WHERE account_id = ?`,
+        [monthly_saving, account_id]
+      );
+
+      console.log(
+        `✅ 목표 ID ${goal_id} (${goal_start} 시작) 자동이체 완료! (거래 ID: ${result.insertId})`
+      );
+      successCount++;
     }
 
-    // 트랜잭션 내역 반환
-    res.status(200).json({ transactions: transactionResult });
+    res.status(200).json({
+      message: `목표 ID ${goal_id} 자동이체 완료: 성공 ${successCount}건, 실패 ${failCount}건`,
+    });
   } catch (err) {
-    console.error("트랜잭션 내역 조회 오류:", err);
+    console.error("🚨 자동이체 오류:", err);
     res.status(500).json({ message: "서버 오류" });
   }
 });
