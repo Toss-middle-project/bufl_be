@@ -128,9 +128,18 @@ async function executeAutoTransfer(
  *         description: 서버 오류
  */
 router.post("/transfer", async (req, res) => {
+  const sessionId = req.cookies.sessionId;
+  if (!sessionId) return res.status(401).json({ message: "세션 없음" });
   try {
-    const userId = req.session.userId;
-    // const userId = 44;
+    const [session] = await db.query(
+      "SELECT user_id FROM sessions WHERE session_id = ?",
+      [sessionId]
+    );
+    //session  없으면 만료
+    if (session.length === 0)
+      return res.status(401).json({ message: "세션 만료됨" });
+
+    const userId = session[0].user_id;
 
     // 사용자 월급통장 정보 가져오기
     const [fromAccount] = await db.query(
@@ -262,13 +271,20 @@ router.post("/transfer", async (req, res) => {
  */
 
 router.get("/history", async (req, res) => {
-  const userId = req.session.userId;
-  // const userId = 44;
+  const sessionId = req.cookies.sessionId;
 
-  if (!userId) {
-    return res.status(400).json({ message: "로그인이 필요합니다." });
-  }
+  if (!sessionId) return res.status(401).json({ message: "세션 없음" });
   try {
+    const [session] = await db.query(
+      "SELECT user_id FROM sessions WHERE session_id = ?",
+      [sessionId]
+    );
+    //session  없으면 만료
+    if (session.length === 0)
+      return res.status(401).json({ message: "세션 만료됨" });
+
+    const userId = session[0].user_id;
+
     const [salaryAccount] = await db.query(
       "SELECT * FROM salary WHERE user_id = ?",
       [userId]

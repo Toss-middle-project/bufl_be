@@ -196,11 +196,7 @@ async function consumptionPattern(transactions) {
 
 async function recommendRatio(salary, interests, transactions) {
   try {
-    const interestSummary = interests.map((interest) => {
-      return {
-        interest: interest.name,
-      };
-    });
+    const interestSummary = interests[0].name;
 
     // const analysisSummary = await consumptionPattern(transactions);
 
@@ -214,7 +210,7 @@ async function recommendRatio(salary, interests, transactions) {
           role: "user",
           content: `사용자의 관심사와 소비 패턴을 분석하여 통장(월급)쪼개기를 위한 카테고리와 비율(월급통장 포함)을 JSON 형식으로만 응답
   
-          관심사: ${JSON.stringify(interestSummary)}
+          관심사: ${interestSummary}
           소비습관(소비패턴) : ${JSON.stringify(transactions)}
           사용자 월급 : ${salary}
           응답에 다음 구조를 사용하세요. JSON 형식으로만 응답하시오. 줄바꿈 문자을 넣지 말고, 줄바꿈하지 마시오.
@@ -252,12 +248,19 @@ async function recommendRatio(salary, interests, transactions) {
 }
 
 router.get("/recommend", async (req, res) => {
-  const userId = req.session.userId;
-  // const userId = 1;
-  if (!userId) {
-    return res.status(400).json({ message: "로그인이 필요합니다." });
-  }
+  const sessionId = req.cookies.sessionId;
+  if (!sessionId) return res.status(401).json({ message: "세션 없음" });
   try {
+    const [session] = await db.query(
+      "SELECT user_id FROM sessions WHERE session_id = ?",
+      [sessionId]
+    );
+    //session  없으면 만료
+    if (session.length === 0)
+      return res.status(401).json({ message: "세션 만료됨" });
+
+    const userId = session[0].user_id;
+
     const [interests] = await db.query(
       "SELECT * FROM interests WHERE user_id = ?",
       [userId]
@@ -290,9 +293,19 @@ router.get("/recommend", async (req, res) => {
 });
 
 router.post("/recommend", async (req, res) => {
-  const userId = req.session.userId;
-  // const userId = 1;
+  const sessionId = req.cookies.sessionId;
+  if (!sessionId) return res.status(401).json({ message: "세션 없음" });
+
   try {
+    const [session] = await db.query(
+      "SELECT user_id FROM sessions WHERE session_id = ?",
+      [sessionId]
+    );
+    //session  없으면 만료
+    if (session.length === 0)
+      return res.status(401).json({ message: "세션 만료됨" });
+
+    const userId = session[0].user_id;
     const recommendResult = req.session.recommendResult;
     console.log(recommendResult);
 
@@ -324,13 +337,19 @@ router.post("/recommend", async (req, res) => {
 });
 
 router.get("/", async (req, res) => {
-  const userId = req.session.userId;
-  // const userId = 1;
+  const sessionId = req.cookies.sessionId;
+  if (!sessionId) return res.status(401).json({ message: "세션 없음" });
 
-  if (!userId) {
-    return res.status(400).send("로그인이 필요합니다.");
-  }
   try {
+    const [session] = await db.query(
+      "SELECT user_id FROM sessions WHERE session_id = ?",
+      [sessionId]
+    );
+    //session  없으면 만료
+    if (session.length === 0)
+      return res.status(401).json({ message: "세션 만료됨" });
+
+    const userId = session[0].user_id;
     const [transactions] = await db.query(
       "SELECT * FROM transaction WHERE account_id IN (SELECT account_id FROM account WHERE user_id = ?) AND inout_type = 'OUT'",
       [userId]
