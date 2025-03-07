@@ -78,13 +78,19 @@ const db = require("../db/db");
  */
 
 router.get("/", async (req, res) => {
-  const userId = req.session.user_id; // 로그인된 사용자의 user_id
-  // const userId = 44;
-  if (!userId) {
-    return res.status(400).json({ message: "로그인이 필요합니다." });
-  }
+  const sessionId = req.cookies.sessionId;
+  if (!sessionId) return res.status(401).json({ message: "세션 없음" });
 
   try {
+    const [session] = await db.query(
+      "SELECT user_id FROM sessions WHERE session_id = ?",
+      [sessionId]
+    );
+    //session  없으면 만료
+    if (session.length === 0)
+      return res.status(401).json({ message: "세션 만료됨" });
+
+    const userId = session[0].user_id;
     const [results] = await db.query(
       "SELECT * FROM account WHERE user_id = ?",
       [userId]
@@ -180,11 +186,8 @@ router.get("/", async (req, res) => {
  */
 router.get("/:account_id/transactions", async (req, res) => {
   const { account_id } = req.params; // URL 파라미터에서 account_id 가져오기
-  const userId = req.session.user_id; // 로그인된 사용자의 user_id
-  // const userId = 44;
-  if (!userId) {
-    return res.status(400).json({ message: "로그인이 필요합니다." });
-  }
+  const sessionId = req.cookies.sessionId;
+  if (!sessionId) return res.status(401).json({ message: "세션 없음" });
 
   // account_id가 제공되지 않았거나 유효하지 않음
   if (!account_id) {
@@ -192,6 +195,16 @@ router.get("/:account_id/transactions", async (req, res) => {
   }
 
   try {
+    const [session] = await db.query(
+      "SELECT user_id FROM sessions WHERE session_id = ?",
+      [sessionId]
+    );
+    //session  없으면 만료
+    if (session.length === 0)
+      return res.status(401).json({ message: "세션 만료됨" });
+
+    const userId = session[0].user_id;
+
     const [results] = await db.query(
       `SELECT 
         t.transaction_id, 

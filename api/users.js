@@ -130,7 +130,7 @@ router.post("/", async (req, res) => {
  *       500:
  *         description: "서버 오류"
  */
-router.get("/login", async (req, res) => {
+router.get("/pin", async (req, res) => {
   try {
     res.json({ message: "PIN 번호 화면입니다." });
   } catch (err) {
@@ -261,12 +261,21 @@ router.post("/pin", async (req, res) => {
  *       - bearerAuth: []
  */
 router.get("/salary", async (req, res) => {
-  const userId = req.session.userId;
-  // const userId = 44;
-  if (!userId) {
-    return res.json.status(400).json({ message: "로그인이 필요합니다." });
-  }
+  const sessionId = req.cookies.sessionId;
+  if (!sessionId) return res.status(401).json({ message: "세션 없음" });
+
   try {
+    const [session] = await db.query(
+      "SELECT user_id FROM sessions WHERE session_id = ?",
+      [sessionId]
+    );
+
+    //session  없으면 만료
+    if (session.length === 0)
+      return res.status(401).json({ message: "세션 만료됨" });
+
+    const userId = session[0].user_id;
+
     const [salary] = await db.query(
       "SELECT account_id, amount, pay_date FROM salary WHERE user_id = ?",
       [userId]
@@ -479,20 +488,28 @@ router.get("/interests", async (req, res) => {
  */
 
 router.post("/interests", async (req, res) => {
-  // const userId = 1;
-  const userId = req.session.userId;
-  const { interests } = req.body;
+  const sessionId = req.cookies.sessionId;
+  if (!sessionId) return res.status(401).json({ message: "세션 없음" });
+  const { interest } = req.body;
 
   try {
+    const [session] = await db.query(
+      "SELECT user_id FROM sessions WHERE session_id = ?",
+      [sessionId]
+    );
+
+    if (session.length === 0)
+      return res.status(401).json({ message: "세션 만료됨" });
+
+    const userId = session[0].user_id;
+
     if (!userId) {
       return res.status(401).json({ error: "로그인이 필요합니다." });
     }
 
-    const values = interests.map((interest) => [userId, interest]);
-
     const [insertResult] = await db.query(
-      "INSERT INTO interests (user_id, name) VALUES ?",
-      [values]
+      "INSERT INTO interests (user_id, name) VALUES (?, ?)",
+      [userId, interest]
     );
 
     res.json({ message: "관심사 등록 성공" });
@@ -552,13 +569,22 @@ router.post("/interests", async (req, res) => {
  *                   example: "서버 오류"
  */
 router.delete("/delete", async (req, res) => {
-  const userId = req.session.userId;
+  const sessionId = req.cookies.sessionId;
+  if (!sessionId) return res.status(401).json({ message: "세션 없음" });
 
-  if (!userId) {
-    return res.status(401).json({ message: "로그인이 필요합니다." });
-  }
   try {
+    const [session] = await db.query(
+      "SELECT user_id FROM sessions WHERE session_id = ?",
+      [sessionId]
+    );
+
+    //session  없으면 만료
+    if (session.length === 0)
+      return res.status(401).json({ message: "세션 만료됨" });
+
+    const userId = session[0].user_id;
     //1. 연관 데이터 삭제 (월급 정보, 관심사 등)
+
     await db.query("DELETE FROM salary WHERE user_id = ?", [userId]);
     await db.query("DELETE FROM interests WHERE user_id = ?", [userId]);
 
@@ -570,13 +596,10 @@ router.delete("/delete", async (req, res) => {
       return res.status(404).json({ message: "회원 정보를 찾을 수 없습니다." });
     }
     // 3. 세션 삭제
-    req.session.destroy((err) => {
-      if (err) {
-        console.error("세션 삭제 오류:", err);
-        return res.status(500).json({ message: "세션 삭제 실패" });
-      }
-      res.json({ message: "회원 탈퇴 완료" });
-    });
+    await db.query("DELETE FROM sessions WHERE session_id = ?", [sessionId]);
+    // ✅ 2. 쿠키 제거
+    res.clearCookie("sessionId");
+    res.json({ message: "회원탈퇴 완료" });
   } catch (err) {
     console.error("회원 탈퇴 오류:", err);
     res.status(500).json({ message: "서버 오류" });

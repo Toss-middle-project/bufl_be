@@ -50,12 +50,20 @@ const db = require("../db/db");
  *         description: 서버 오류
  */
 router.get("/category", async (req, res) => {
-  const userId = req.session.userId;
-  // const userId = 1;
-  if (!userId) {
-    res.json.status(400).json({ message: "로그인이 필요합니다." });
-  }
+  const sessionId = req.cookies.sessionId;
+
+  if (!sessionId) return res.status(401).json({ message: "세션 없음" });
   try {
+    const [session] = await db.query(
+      "SELECT user_id FROM sessions WHERE session_id = ?",
+      [sessionId]
+    );
+    //session  없으면 만료
+    if (session.length === 0)
+      return res.status(401).json({ message: "세션 만료됨" });
+
+    const userId = session[0].user_id;
+
     const [salaryAccount] = await db.query(
       "SELECT bank_name, account_number FROM account WHERE account_id = (SELECT account_id FROM salary WHERE user_id = ?)",
       [userId]
@@ -172,14 +180,24 @@ router.get("/category/:id", async (req, res) => {
  *         description: 서버 오류
  */
 router.post("/category", async (req, res) => {
-  // const userId = 44;
-  const userId = req.session.userId;
+  const sessionId = req.cookies.sessionId;
   const categories = req.body;
 
+  if (!sessionId) return res.status(401).json({ message: "세션 없음" });
   if (!Array.isArray(categories) || categories.length === 0) {
     return res.status(400).json({ message: "카테고리 정보가 잘못되었습니다." });
   }
   try {
+    const [session] = await db.query(
+      "SELECT user_id FROM sessions WHERE session_id = ?",
+      [sessionId]
+    );
+    //session  없으면 만료
+    if (session.length === 0)
+      return res.status(401).json({ message: "세션 만료됨" });
+
+    const userId = session[0].user_id;
+
     let totalPercentage = 0;
     for (const category of categories) {
       totalPercentage += category.ratio || 0;
@@ -341,10 +359,20 @@ router.post("/account", async (req, res) => {
  *         description: 서버 오류
  */
 router.get("/account", async (req, res) => {
-  // const userId = 44;
-  const userId = req.session.userId;
+  const sessionId = req.cookies.sessionId;
+  if (!sessionId) return res.status(401).json({ message: "세션 없음" });
 
   try {
+    const [session] = await db.query(
+      "SELECT user_id FROM sessions WHERE session_id = ?",
+      [sessionId]
+    );
+    //session  없으면 만료
+    if (session.length === 0)
+      return res.status(401).json({ message: "세션 만료됨" });
+
+    const userId = session[0].user_id;
+
     const [categories] = await db.query(
       "SELECT name, account_id FROM categories WHERE user_id = ?",
       [userId]
