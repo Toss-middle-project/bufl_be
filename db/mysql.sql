@@ -1,4 +1,4 @@
-use new;
+use new; 
 DROP TABLE `Users`;
 DROP TABLE `Account`;
 CREATE TABLE `Users` (

@@ -2,6 +2,101 @@ const express = require("express");
 const session = require("express-session");
 const router = express.Router();
 const db = require("../db/db");
+ 
+/**
+ * @swagger
+ * /api/users/update-password:
+ *   put:
+ *     summary: "사용자의 비밀번호 업데이트"
+ *     tags: [Users]
+ *     description: "사용자가 설정한 PIN 번호를 비밀번호로 저장합니다."
+ *     parameters:
+ *       - in: body
+ *         name: user
+ *         description: "비밀번호 변경 요청"
+ *         required: true
+ *         schema:
+ *           type: object
+ *           properties:
+ *             userPhone:
+ *               type: string
+ *               example: "01012345678"
+ *             userPassword:
+ *               type: string
+ *               example: "123456"
+ *     responses:
+ *       200:
+ *         description: "비밀번호 변경 성공"
+ *       400:
+ *         description: "필요한 정보를 입력하지 않음"
+ *       404:
+ *         description: "사용자를 찾을 수 없음"
+ *       500:
+ *         description: "서버 오류"
+ */
+/**
+ * @swagger
+ * /api/users/update-password:
+ *   put:
+ *     summary: "사용자의 비밀번호 업데이트"
+ *     tags: [Users]
+ *     description: "사용자가 설정한 PIN 번호를 비밀번호로 저장합니다."
+ *     parameters:
+ *       - in: body
+ *         name: user
+ *         description: "비밀번호 변경 요청"
+ *         required: true
+ *         schema:
+ *           type: object
+ *           properties:
+ *             userPhone:
+ *               type: string
+ *               example: "01012345678"
+ *             userPassword:
+ *               type: string
+ *               example: "123456"
+ *     responses:
+ *       200:
+ *         description: "비밀번호 변경 성공"
+ *       400:
+ *         description: "필요한 정보를 입력하지 않음"
+ *       404:
+ *         description: "사용자를 찾을 수 없음"
+ *       500:
+ *         description: "서버 오류"
+ */
+router.put("/update-password", async (req, res) => {
+  const { userPhone, userPassword } = req.body;
+
+  if (!userPhone || !userPassword) {
+    return res.status(400).json({ message: "모든 정보를 입력하세요!" });
+  }
+
+  try {
+    // 사용자 조회
+    const [userResult] = await db.query(
+      "SELECT user_id FROM users WHERE user_phone = ?",
+      [userPhone]
+    );
+
+    if (userResult.length === 0) {
+      return res.status(404).json({ message: "회원가입 정보를 찾을 수 없습니다." });
+    }
+
+    // 비밀번호 업데이트
+    await db.query(
+      "UPDATE users SET user_password = ? WHERE user_phone = ?",
+      [userPassword, userPhone]
+    );
+
+    res.status(200).json({ message: "비밀번호 변경 성공" });
+  } catch (err) {
+    console.error("비밀번호 업데이트 오류:", err);
+    res.status(500).json({ message: "서버 오류" });
+  }
+});
+
+
 
 /**
  * @swagger
@@ -75,11 +170,7 @@ router.post("/", async (req, res) => {
       return res.status(400).json({ message: "모든 정보를 입력하세요." });
     }
 
-    if (userPassword.length < 6) {
-      return res
-        .status(400)
-        .json({ message: "비밀번호는 6자리 이상이어야 합니다." });
-    }
+
 
     const [results] = await db.query(
       "SELECT * FROM users WHERE user_regnu = ? OR user_phone = ?",
