@@ -73,14 +73,8 @@ router.get("/", async (req, res) => {
 router.post("/", async (req, res) => {
   const { userName, userRegnu, userPhone, userPassword } = req.body;
   try {
-    if (!userName || !userRegnu || !userPhone || !userPassword) {
+    if (!userName || !userRegnu || !userPhone) {
       return res.status(400).json({ message: "모든 정보를 입력하세요." });
-    }
-
-    if (userPassword.length < 6) {
-      return res
-        .status(400)
-        .json({ message: "비밀번호는 6자리 이상이어야 합니다." });
     }
 
     const [existingUsers] = await db.query(
@@ -116,6 +110,35 @@ router.post("/", async (req, res) => {
   }
 });
 
+// PIN 번호 등록
+router.put("/update-password", async (req, res) => {
+  const { userPassword } = req.body;
+  const sessionId = req.cookies.sessionId;
+  if (!sessionId) return res.status(401).json({ message: "세션 없음" });
+  try {
+    const [session] = await db.query(
+      "SELECT user_id FROM sessions WHERE session_id = ?",
+      [sessionId]
+    );
+
+    if (session.length === 0)
+      return res.status(401).json({ message: "세션 만료됨" });
+
+    const userId = session[0].user_id;
+    if (userPassword) {
+      const hashedPassword = await bcrypt.hash(userPassword, 10);
+
+      await db.query("UPDATE users SET user_password = ? WHERE user_id = ? ", [
+        hashedPassword,
+        userId,
+      ]);
+      res.status(200).json({ message: "PiN 번호 등록 성공" });
+    }
+  } catch (err) {
+    console.error("PiN 번호 등록 오류:", err);
+    res.status(500).json({ message: "서버 오류" });
+  }
+});
 // PiN 번호 입력 화면
 /**
  * @swagger
