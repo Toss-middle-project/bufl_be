@@ -8,15 +8,17 @@ const salaryRouter = require("./api/salary");
 const transactionsRouter = require("./api/transactions");
 const expensesRouter = require("./api/expenses"); // 소비내역 가져오기
 const goalRouter = require("./api/goal"); // 목표
-const salaryaiRouter = require("./api/salaryai");
-const session = require("express-session");
+const aiAnalysisRouter = require("./api/ai-analysis.js");
 const goalAI = require("./api/goalai"); // goalai.js에서 router 가져오기
+const session = require("express-session");
+const cookieParser = require("cookie-parser");
 
 const app = express();
 const port = 5000;
 
 app.use(cors());
 app.use(express.json());
+app.use(cookieParser());
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
 
 app.use(
@@ -34,8 +36,8 @@ app.use("/api/salary", salaryRouter); // 라우터 등록
 app.use("/api/transactions", transactionsRouter);
 app.use("/api/expenses", expensesRouter); // 라우터 등록
 app.use("/api/goals", goalRouter); // 라우터 등록
-app.use("/api/salaryai", salaryaiRouter);
 app.use("/api/goalai", goalAI); // 라우터 등록
+app.use("/api/ai-analysis", aiAnalysisRouter);
 
 app.get("/", async (req, res) => {
   try {
@@ -57,9 +59,9 @@ app.listen(port, () => {
   console.log("📄 Swagger 문서: http://localhost:5000/api-docs");
 });
 
-async function main() {
-  console.log("=== 기본 메시지 생성 ===");
-  // await generateMessage(); // 재시도 로직을 포함한 메시지 생성
-}
+// async function main() {
+//   console.log("=== 기본 메시지 생성 ===");
+//   // await generateMessage(); // 재시도 로직을 포함한 메시지 생성
+// }
 
-main().catch(console.error);
+// main().catch(console.error);

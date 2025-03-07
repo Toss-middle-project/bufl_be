@@ -18,7 +18,9 @@
   "homepage": "https://github.com/Toss-middle-project/bufl_be#readme",
   "dependencies": {
     "@anthropic-ai/sdk": "^0.39.0",
+    "bcrypt": "^5.1.1",
     "body-parser": "^1.20.3",
+    "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^4.21.2",
@@ -28,6 +30,7 @@
     "node-schedule": "^2.1.1",
     "session-file-store": "^1.5.0",
     "swagger-jsdoc": "^6.2.8",
-    "swagger-ui-express": "^5.0.1"
+    "swagger-ui-express": "^5.0.1",
+    "uuid": "^11.1.0"
   }
 }
