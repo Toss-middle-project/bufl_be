@@ -11,7 +11,7 @@ const goalRouter = require("./api/goal"); // 목표
 const session = require("express-session");
 
 const app = express();
-const port = 5002;
+const port = 5004;
 
 app.use(cors());
 app.use(express.json());
