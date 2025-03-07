@@ -106,12 +106,12 @@ router.post("/", async (req, res) => {
   try {
     // 계좌 정보 조회 (account_id에 해당하는 계좌 번호 및 잔액 포함)
     const [accountResult] = await db.query(
-      `SELECT account_number FROM account WHERE account_id = ?`,
-      [account_id]
+      `SELECT account_number FROM account WHERE account_id = ? AND user_id = ?`,
+      [account_id, userId]
     );
 
     if (accountResult.length === 0) {
-      return res.status(404).json({ message: "계좌를 찾을 수 없습니다." });
+      return res.status(404).json({ message: "해당 계좌를 찾을 수 없습니다." });
     }
 
     const account = accountResult[0]; // 계좌 정보
@@ -380,6 +380,46 @@ router.post("/:goal_id/deposit", async (req, res) => {
     });
   } catch (err) {
     console.error("입금 처리 오류:", err);
+    res.status(500).json({ message: "서버 오류" });
+  }
+});
+
+//목표저축 입금내역
+router.get("/:goal_id/transactions", async (req, res) => {
+  const { goal_id } = req.params;
+
+  try {
+    // 목표 확인 쿼리
+    const [goalResult] = await db.query(
+      `SELECT goal_name FROM goal WHERE goal_id = ?`,
+      [goal_id]
+    );
+    if (goalResult.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "해당 목표가 존재하지 않습니다." });
+    }
+
+    // 목표에 대한 입금 내역 조회
+    const [transactionResult] = await db.query(
+      `SELECT t.tran_amt, t.tran_balance_amt, t.tran_desc, t.transaction_time
+      FROM transaction t
+      WHERE t.to_account_number = ? AND t.tran_desc = '목표저축'
+      ORDER BY t.transaction_time DESC`,
+      [goalResult[0].goal_name]
+    );
+
+    // 결과가 없을 경우 처리
+    if (transactionResult.length === 0) {
+      return res
+        .status(404)
+        .json({ message: "해당 목표에 입금된 내역이 없습니다." });
+    }
+
+    // 트랜잭션 내역 반환
+    res.status(200).json({ transactions: transactionResult });
+  } catch (err) {
+    console.error("트랜잭션 내역 조회 오류:", err);
     res.status(500).json({ message: "서버 오류" });
   }
 });
