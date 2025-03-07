@@ -2,6 +2,8 @@ const express = require("express");
 const session = require("express-session");
 const router = express.Router();
 const db = require("../db/db");
+const bcrypt = require("bcrypt");
+const { v4: uuidv4 } = require("uuid");
 
 /**
  * @swagger
@@ -81,26 +83,33 @@ router.post("/", async (req, res) => {
         .json({ message: "비밀번호는 6자리 이상이어야 합니다." });
     }
 
-    const [results] = await db.query(
+    const [existingUsers] = await db.query(
       "SELECT * FROM users WHERE user_regnu = ? OR user_phone = ?",
       [userRegnu, userPhone]
     );
-    if (results.length > 0) {
+    if (existingUsers.length > 0) {
       return res.status(400).json({ message: "이미 가입된 회원입니다." });
     }
+    const hashedPassword = await bcrypt.hash(userPassword, 10);
 
     const [result] = await db.query(
       "INSERT INTO users (user_name, user_regnu, user_phone, user_password) VALUES (?, ?, ?, ?)",
-      [userName, userRegnu, userPhone, userPassword]
+      [userName, userRegnu, userPhone, hashedPassword]
     );
 
-    req.session.user = {
-      userName,
-      userPhone,
-      userPassword,
-    };
+    const sessionId = uuidv4();
+    await db.query("INSERT INTO sessions (user_id, session_id) VALUES (?, ?)", [
+      result.insertId,
+      sessionId,
+    ]);
 
-    res.status(201).json({ message: "회원가입 성공" });
+    res.cookie("sessionId", sessionId, {
+      httpOnly: true,
+      secure: false, // 배포 시 true (HTTPS 필수)
+      maxAge: 7 * 24 * 60 * 60 * 1000, // 7일 유지
+    });
+
+    res.status(201).json({ message: "회원가입 및 자동 로그인 완료" });
   } catch (err) {
     console.error("회원가입 오류:", err);
     res.status(500).json({ message: "서버 오류" });
@@ -157,32 +166,42 @@ router.get("/login", async (req, res) => {
  *       500:
  *         description: "서버 오류"
  */
-router.post("/login", async (req, res) => {
+router.post("/pin", async (req, res) => {
+  const sessionId = req.cookies.sessionId;
   const { userPassword } = req.body;
-  const userPhone = req.session.user.userPhone;
 
+  if (!sessionId) return res.status(401).json({ message: "세션 없음" });
   try {
     if (userPassword) {
-      const [results] = await db.query(
-        "SELECT user_id FROM users WHERE user_password = ? AND user_phone = ?",
-        [userPassword, userPhone]
+      const [session] = await db.query(
+        "SELECT user_id FROM sessions WHERE session_id = ?",
+        [sessionId]
       );
 
-      if (results.length > 0) {
-        req.session.isLogined = true; // 세션 정보 갱신
-        req.session.userId = results[0].user_id;
-        res.status(201).json({ message: "로그인 성공" });
-      } else {
-        res.send(`
-          <script type="text/javascript">
-            alert("로그인 정보가 일치하지 않습니다.");
-            document.location.href="/api/users/login";
-          </script>
-        `);
-      }
+      if (session.length === 0)
+        return res.status(401).json({ message: "세션 만료됨" });
+
+      const [user] = await db.query("SELECT * FROM users WHERE user_id = ?", [
+        session[0].user_id,
+      ]);
+
+      if (!user.length)
+        return res.status(401).json({ message: "사용자 정보 없음" });
+
+      const hashedPassword = user[0].user_password;
+
+      bcrypt.compare(userPassword, hashedPassword, (err, isMatch) => {
+        if (err) throw err;
+
+        if (isMatch) {
+          res.status(201).json({ message: "PIN 번호 인증 성공" });
+        } else {
+          res.status(400).json({ message: "PIN 번호 인증 오류" });
+        }
+      });
     }
   } catch (err) {
-    console.error("로그인 오류:", err);
+    console.error("PIN 번호 인증 오류:", err);
     res.status(500).json({ message: "서버 오류" });
   }
 });
