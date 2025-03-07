@@ -33,43 +33,37 @@ router.get("/", async (req, res) => {
     res.status(500).json({ message: "서버오류" });
   }
 });
-
-// 회원가입 로직
 /**
  * @swagger
  * /api/users:
  *   post:
- *     summary: "회원가입"
- *     tags: [Users]
- *     description: "새 사용자를 회원가입합니다."
- *     parameters:
- *       - in: body
- *         name: user
- *         description: "회원가입에 필요한 사용자 정보"
- *         required: true
- *         schema:
- *           type: object
- *           properties:
- *             userName:
- *               type: string
- *               example: "이순자"
- *             userRegnu:
- *               type: string
- *               example: "600818-1218896"
- *             userPhone:
- *               type: string
- *               example: "010-5698-4879"
- *             userPassword:
- *               type: string
- *               example: "600818"
+ *     summary: 회원 가입 및 자동 로그인
+ *     description: 사용자 정보를 받아 회원 가입을 진행하고, 세션을 생성하여 자동 로그인 처리
+ *     tags: [User]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userName:
+ *                 type: string
+ *               userRegnu:
+ *                 type: string
+ *               userPhone:
+ *                 type: string
+ *               userPassword:
+ *                 type: string
  *     responses:
  *       201:
- *         description: "회원가입 성공"
+ *         description: 회원가입 및 자동 로그인 완료
  *       400:
- *         description: "잘못된 요청 (모든 정보를 입력하세요.)"
+ *         description: 입력값 오류 또는 이미 가입된 회원
  *       500:
- *         description: "서버 오류"
+ *         description: 서버 오류
  */
+
 router.post("/", async (req, res) => {
   const { userName, userRegnu, userPhone, userPassword } = req.body;
   try {
@@ -110,6 +104,31 @@ router.post("/", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/users/update-password:
+ *   put:
+ *     summary: PIN 번호 등록
+ *     description: 사용자 세션을 확인하고 비밀번호(PIN)를 변경
+ *     tags: [User]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userPassword:
+ *                 type: string
+ *     responses:
+ *       200:
+ *         description: PIN 번호 등록 성공
+ *       401:
+ *         description: 세션 없음 또는 만료됨
+ *       500:
+ *         description: 서버 오류
+ */
+
 // PIN 번호 등록
 router.put("/update-password", async (req, res) => {
   const { userPassword } = req.body;
@@ -139,19 +158,18 @@ router.put("/update-password", async (req, res) => {
     res.status(500).json({ message: "서버 오류" });
   }
 });
-// PiN 번호 입력 화면
 /**
  * @swagger
- * /api/users/login:
+ * /api/users/pin:
  *   get:
- *     summary: "PIN 번호 입력 화면"
- *     tags: [Users]
- *     description: "로그인 화면을 반환합니다."
+ *     summary: PIN 번호 화면 요청
+ *     description: 클라이언트가 PIN 번호 관련 화면을 요청
+ *     tags: [User]
  *     responses:
  *       200:
- *         description: "PIN 번호 화면을 반환합니다."
+ *         description: PIN 번호 화면 제공
  *       500:
- *         description: "서버 오류"
+ *         description: 서버 오류
  */
 router.get("/pin", async (req, res) => {
   try {
@@ -162,32 +180,31 @@ router.get("/pin", async (req, res) => {
   }
 });
 
-// PIN번호 로직
 /**
  * @swagger
- * /api/users/login:
+ * api/users//pin:
  *   post:
- *     summary: "로그인"
- *     tags: [Users]
- *     description: "사용자가 PIN 번호를 입력하여 로그인합니다."
- *     parameters:
- *       - in: body
- *         name: userPassword
- *         description: "사용자가 입력한 PIN 번호"
- *         required: true
- *         schema:
- *           type: object
- *           properties:
- *             userPassword:
- *               type: string
- *               example: "600818"
+ *     summary: PIN 번호 인증
+ *     description: 사용자가 입력한 PIN 번호를 검증
+ *     tags: [User]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userPassword:
+ *                 type: string
  *     responses:
  *       201:
- *         description: "로그인 성공"
+ *         description: PIN 번호 인증 성공
  *       400:
- *         description: "로그인 정보가 일치하지 않습니다."
+ *         description: PIN 번호 인증 오류
+ *       401:
+ *         description: 세션 없음 또는 만료됨
  *       500:
- *         description: "서버 오류"
+ *         description: 서버 오류
  */
 router.post("/pin", async (req, res) => {
   const sessionId = req.cookies.sessionId;
@@ -463,8 +480,9 @@ router.get("/interests", async (req, res) => {
  * @swagger
  * /api/users/interests:
  *   post:
- *     summary: "관심사 등록"
- *     description: "사용자가 선택한 관심사를 등록합니다."
+ *     summary: 관심사 등록
+ *     description: 사용자가 관심사를 등록할 수 있도록 합니다.
+ *     tags: [User]
  *     requestBody:
  *       required: true
  *       content:
@@ -472,42 +490,16 @@ router.get("/interests", async (req, res) => {
  *           schema:
  *             type: object
  *             properties:
- *               interests:
- *                 type: array
- *                 items:
- *                   type: string
- *                 description: "사용자가 선택한 관심사 목록"
+ *               interest:
+ *                 type: string
+ *                 description: 사용자가 등록할 관심사
  *     responses:
  *       200:
- *         description: "관심사 등록 성공"
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "관심사 등록 성공"
+ *         description: 관심사 등록 성공
  *       401:
- *         description: "로그인이 필요함"
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "로그인이 필요합니다."
+ *         description: 세션 없음 또는 로그인 필요
  *       500:
- *         description: "서버 오류"
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 error:
- *                   type: string
- *                   example: "서버 오류"
+ *         description: 서버 오류
  */
 
 router.post("/interests", async (req, res) => {
