@@ -62,6 +62,42 @@ async function getGoalRecommendations(req) {
     throw new Error("AI 목표 추천 실패: " + error.message);
   }
 }
+
+/**
+ * @swagger
+ * /api/ai-goals:
+ *   get:
+ *     tags: [Ai]
+ *     summary: AI 추천 목표 목록 가져오기
+ *     description: AI로부터 추천된 저축 목표 목록을 반환합니다.
+ *     responses:
+ *       200:
+ *         description: 목표 목록을 성공적으로 가져왔습니다.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                 recommendations:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       goal_name:
+ *                         type: string
+ *                       goal_amount:
+ *                         type: number
+ *                       goal_duration:
+ *                         type: number
+ *                       monthly_saving:
+ *                         type: number
+ *       400:
+ *         description: AI에서 추천한 목표가 없습니다.
+ *       500:
+ *         description: 목표 목록을 가져오는 중 오류가 발생했습니다.
+ */
 // AI 추천 목표 목록 가져오기 (GET)
 router.get("/", async (req, res) => {
   const sessionId = req.cookies.sessionId;
@@ -90,6 +126,32 @@ router.get("/", async (req, res) => {
   }
 });
 
+/**
+ * @swagger
+ * /api/ai-goals/generate-goals:
+ *   post:
+ *     tags: [Ai]
+ *     summary: 추천 목표 저장하기
+ *     description: 사용자가 선택한 목표를 데이터베이스에 저장하고 자동이체를 실행합니다.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               selectedGoalIndex:
+ *                 type: number
+ *               accountId:
+ *                 type: number
+ *     responses:
+ *       200:
+ *         description: 목표가 성공적으로 저장되었습니다.
+ *       400:
+ *         description: 유효하지 않은 선택된 목표
+ *       500:
+ *         description: 목표 저장 중 오류가 발생했습니다.
+ */
 router.post("/generate-goals", async (req, res) => {
   const sessionId = req.cookies.sessionId;
   if (!sessionId) return res.status(401).json({ message: "세션 없음" });
@@ -98,7 +160,7 @@ router.post("/generate-goals", async (req, res) => {
     "SELECT user_id FROM sessions WHERE session_id = ?",
     [sessionId]
   );
-  //session  없으면 만료
+
   if (session.length === 0)
     return res.status(401).json({ message: "세션 만료됨" });
 
@@ -108,7 +170,6 @@ router.post("/generate-goals", async (req, res) => {
   const selectedGoalIndex = req.body.selectedGoalIndex;
   const accountId = req.body.accountId;
 
-  // aiResponse에서 recommendations 배열을 사용하도록 변경
   const goals = aiResponse.recommendations;
 
   console.log("selectedGoalIndex:", selectedGoalIndex); // 디버깅: 인덱스 값 확인
@@ -118,7 +179,6 @@ router.post("/generate-goals", async (req, res) => {
     return res.status(400).json({ message: "AI에서 추천한 목표가 없습니다." });
   }
 
-  // 인덱스가 배열 범위 내에 있는지 확인
   if (selectedGoalIndex < 0 || selectedGoalIndex >= goals.length) {
     return res
       .status(400)
@@ -134,7 +194,6 @@ router.post("/generate-goals", async (req, res) => {
         .json({ message: "선택된 목표가 유효하지 않습니다." });
     }
 
-    // 목표 금액 자동 설정 (예: 목표 금액을 300만원으로 설정)
     const { goal_name, goal_amount, goal_duration, monthly_saving } =
       selectedGoal;
 
@@ -156,6 +215,49 @@ router.post("/generate-goals", async (req, res) => {
     console.log(
       `목표 "${goal_name}"이 성공적으로 저장되었습니다. (ID: ${result.insertId})`
     );
+
+    // 목표 생성 후 자동이체 실행 로직 추가
+    const [accountResult] = await db.query(
+      `SELECT account_number, balance FROM account WHERE account_id = ?`,
+      [accountId]
+    );
+
+    const account = accountResult[0];
+
+    if (account.balance >= monthly_saving) {
+      const newBalance = account.balance - monthly_saving;
+
+      // 계좌 잔액 업데이트
+      await db.query(`UPDATE account SET balance = ? WHERE account_id = ?`, [
+        newBalance,
+        accountId,
+      ]);
+
+      // 목표 금액 업데이트
+      await db.query(
+        `UPDATE goal SET current_amount = current_amount + ? WHERE goal_id = ?`,
+        [monthly_saving, result.insertId]
+      );
+
+      // 트랜잭션 기록
+      await db.query(
+        `INSERT INTO transaction (account_id, from_account_number, to_account_number, inout_type, tran_amt, tran_balance_amt, tran_desc)
+        VALUES (?, ?, ?, 'OUT', ?, ?, '목표 저축')`,
+        [
+          accountId,
+          account.account_number,
+          goal_name,
+          monthly_saving,
+          newBalance,
+        ]
+      );
+
+      console.log(
+        `자동이체 완료: 목표 ${result.insertId}, 금액: ${monthly_saving}, 잔액: ${newBalance}`
+      );
+    } else {
+      console.log(`목표 ${result.insertId}: 잔액 부족, 자동이체 실행되지 않음`);
+    }
 
     res.status(200).json({
       message: "선택된 목표가 성공적으로 저장되었습니다.",
