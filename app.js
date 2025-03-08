@@ -16,10 +16,15 @@ const cookieParser = require("cookie-parser");
 const app = express();
 const port = 5000;
 
-app.use(cors());
+// app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
-app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
+app.use(
+  cors({
+    origin: "http://localhost:3000", // 프론트엔드 주소
+    credentials: true, // 쿠키 허용
+  })
+);
 
 app.use(
   session({
