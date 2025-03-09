@@ -9,7 +9,7 @@ const transactionsRouter = require("./api/transactions");
 const expensesRouter = require("./api/expenses"); // 소비내역 가져오기
 const goalRouter = require("./api/goal"); // 목표
 const aiAnalysisRouter = require("./api/ai-analysis.js");
-const goalAI = require("./api/goalai"); // goalai.js에서 router 가져오기
+const goalAI = require("./api/ai-goal.js"); // goalai.js에서 router 가져오기
 const session = require("express-session");
 const cookieParser = require("cookie-parser");
 
@@ -41,7 +41,7 @@ app.use("/api/salary", salaryRouter); // 라우터 등록
 app.use("/api/transactions", transactionsRouter);
 app.use("/api/expenses", expensesRouter); // 라우터 등록
 app.use("/api/goals", goalRouter); // 라우터 등록
-app.use("/api/goalai", goalAI); // 라우터 등록
+app.use("/api/ai-goals", goalAI); // 라우터 등록
 app.use("/api/ai-analysis", aiAnalysisRouter);
 
 app.get("/", async (req, res) => {
