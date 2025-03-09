@@ -34,7 +34,7 @@ app.use(
     cookie: { secure: false }, // https를 사용할 경우 true로 설정
   })
 );
-
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
 app.use("/api/users", usersRouter); // 라우터 등록
 app.use("/api/accounts", accountRouter); // 라우터 등록
 app.use("/api/salary", salaryRouter); // 라우터 등록
