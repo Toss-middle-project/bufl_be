@@ -201,7 +201,7 @@ router.post("/", async (req, res) => {
  * @swagger
  * /api/goals:
  *   get:
- *     summary: "저축 목표 목록 조회"
+ *     summary: "저축 목표 목록 전체 조회"
  *     description: "사용자의 저축 목표 목록과 목표 달성 확률을 조회합니다."
  *     tags: [Goals]
  *     responses:
@@ -220,7 +220,7 @@ router.post("/", async (req, res) => {
  *                   items:
  *                     type: object
  *                     properties:
- *                       goal_id:
+ *                       id:
  *                         type: integer
  *                       goal_name:
  *                         type: string
@@ -248,7 +248,7 @@ router.post("/", async (req, res) => {
  *         description: "서버 오류"
  */
 
-// 목표 조회 API
+// 전체 목표 조회 API
 router.get("/", async (req, res) => {
   const sessionId = req.cookies.sessionId;
   if (!sessionId) return res.status(401).json({ message: "세션 없음" });
@@ -285,6 +285,103 @@ router.get("/", async (req, res) => {
     });
 
     res.status(200).json({ message: "목표 내역", goals: goalsWithProbability });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ message: "서버 오류" });
+  }
+});
+/**
+ * @swagger
+ * /api/goals/:id:
+ *   get:
+ *     summary: "저축 목표 목록 조회"
+ *     description: "사용자의 저축 목표 목록과 목표 달성 확률을 조회합니다."
+ *     tags: [Goals]
+ *     responses:
+ *       200:
+ *         description: "목표 내역 조회 성공"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "목표 내역"
+ *                 goals:
+ *                   type: array
+ *                   items:
+ *                     type: object
+ *                     properties:
+ *                       id:
+ *                         type: integer
+ *                       goal_name:
+ *                         type: string
+ *                       goal_amount:
+ *                         type: number
+ *                         format: float
+ *                       current_amount:
+ *                         type: number
+ *                         format: float
+ *                       goal_duration:
+ *                         type: integer
+ *                       goal_start:
+ *                         type: string
+ *                         format: date-time
+ *                       goal_end:
+ *                         type: string
+ *                         format: date-time
+ *                       probability:
+ *                         type: integer
+ *       400:
+ *         description: "로그인이 필요합니다."
+ *       404:
+ *         description: "목표 내역이 없음"
+ *       500:
+ *         description: "서버 오류"
+ */
+//목표 테이블에서 id값 하나만 넘기기기
+router.get("/:id", async (req, res) => {
+  const sessionId = req.cookies.sessionId;
+  if (!sessionId) return res.status(401).json({ message: "세션 없음" });
+
+  try {
+    const [session] = await db.query(
+      "SELECT user_id FROM sessions WHERE session_id = ?",
+      [sessionId]
+    );
+
+    // session 없으면 만료 처리
+    if (session.length === 0)
+      return res.status(401).json({ message: "세션 만료됨" });
+
+    const userId = session[0].user_id;
+    const goalId = req.params.id; // URL 파라미터에서 goal_id 받기
+
+    // goal 정보 조회
+    const [goal] = await db.query(
+      "SELECT * FROM goal WHERE user_id = ? AND id = ?",
+      [userId, goalId]
+    );
+
+    if (goal.length === 0) {
+      return res.status(404).json({ message: "목표를 찾을 수 없습니다." });
+    }
+
+    const elapsedMonths = getElapsedMonths(goal[0].goal_start);
+    const probability = Math.round(
+      calculateGoalCompletionProbability(
+        goal[0].goal_amount,
+        goal[0].current_amount || 0,
+        goal[0].goal_duration,
+        elapsedMonths
+      )
+    );
+
+    res.status(200).json({
+      message: "목표 상세 정보",
+      goal: { ...goal[0], probability: `${probability}%` },
+    });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "서버 오류" });
