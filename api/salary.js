@@ -65,7 +65,7 @@ router.get("/category", async (req, res) => {
     const userId = session[0].user_id;
 
     const [salaryAccount] = await db.query(
-      "SELECT bank_name, account_number FROM account WHERE account_id = (SELECT account_id FROM salary WHERE user_id = ?)",
+      "SELECT bank_name, account_number FROM account WHERE id = (SELECT account_id FROM salary WHERE user_id = ?)",
       [userId]
     );
     const [categories] = await db.query(
@@ -197,6 +197,15 @@ router.post("/category", async (req, res) => {
       return res.status(401).json({ message: "세션 만료됨" });
 
     const userId = session[0].user_id;
+
+    const [existCategories] = await db.query(
+      "SELECT * FROM categories WHERE user_id = ? ",
+      [userId]
+    );
+
+    if (existCategories.length > 0) {
+      await db.query("DELETE FROM categories WHERE user_id = ?", [userId]);
+    }
 
     let totalPercentage = 0;
     for (const category of categories) {
@@ -379,7 +388,7 @@ router.get("/account", async (req, res) => {
     );
 
     const [salaryAccount] = await db.query(
-      "SELECT bank_name, account_number FROM account WHERE account_id = (SELECT account_id FROM salary WHERE user_id = ?)",
+      "SELECT bank_name, account_number FROM account WHERE id = (SELECT account_id FROM salary WHERE user_id = ?)",
       [userId]
     );
 
@@ -399,7 +408,7 @@ router.get("/account", async (req, res) => {
           };
         }
         const [account] = await db.query(
-          "SELECT bank_name, account_number FROM account WHERE account_id = ?",
+          "SELECT bank_name, account_number FROM account WHERE id = ?",
           [category.account_id]
         );
 
