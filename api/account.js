@@ -92,7 +92,7 @@ router.get("/", async (req, res) => {
 
     const userId = session[0].user_id;
     const [results] = await db.query(
-      "SELECT * FROM account WHERE user_id = ?",
+      "SELECT id AS account_id,account_number,bank_name,balance,logo FROM account WHERE user_id = ?",
       [userId]
     );
 
@@ -207,7 +207,7 @@ router.get("/:account_id/transactions", async (req, res) => {
 
     const [results] = await db.query(
       `SELECT 
-        t.transaction_id, 
+        t.id AS transaction_id, 
         t.from_account_number, 
         t.to_account_number, 
         t.inout_type, 

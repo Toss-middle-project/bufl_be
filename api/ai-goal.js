@@ -30,7 +30,7 @@ async function getGoalRecommendations(req) {
         {
           role: "user",
           content: `저축 목표를 추천해주세요. 목표 금액은 50만원에서 300만원 사이로 설정하고, 기간은 3개월에서 36개월 사이로 설정해주세요.
-           각 목표에 대해 5개 정도의 추천 목표를 생성해주세요.
+           각 목표에 대해 4개 정도의 추천 목표를 생성해주세요.
            형식은 예를들어
            recommendations: [
               {
