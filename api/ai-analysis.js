@@ -319,6 +319,14 @@ router.post("/recommend", async (req, res) => {
         category.amount,
       ];
     });
+    const [existCategories] = await db.query(
+      "SELECT * FROM categories WHERE user_id = ? ",
+      [userId]
+    );
+
+    if (existCategories.length > 0) {
+      await db.query("DELETE FROM categories WHERE user_id = ?", [userId]);
+    }
 
     const [result] = await db.query(
       "INSERT INTO categories (user_id, name, goal_amount, background_color, ratio, amount) VALUES ?",
