@@ -100,9 +100,9 @@ router.get("/", async (req, res) => {
     const userId = session[0].user_id;
     // 1. 사용자가 보유한 모든 소비내역 가져오기
     const [transactions] = await db.query(
-      ` SELECT t.transaction_id, t.account_id,t.inout_type, t.tran_amt, t.tran_balance_amt,  t.tran_desc, t.transaction_time
+      ` SELECT t.id, t.account_id,t.inout_type, t.tran_amt, t.tran_balance_amt,  t.tran_desc, t.transaction_time
         FROM transaction t
-        JOIN account a ON t.account_id = a.account_id
+        JOIN account a ON t.account_id = a.id
         WHERE a.user_id = ? `,
       [userId]
     );
@@ -203,7 +203,7 @@ router.get("/:month", async (req, res) => {
     const [results] = await db.query(
       `SELECT SUM(t.tran_amt) AS total_spent
         FROM transaction t
-        JOIN account a ON t.account_id = a.account_id
+        JOIN account a ON t.account_id = a.id
         WHERE a.user_id = ? 
           AND t.inout_type = 'OUT'
           AND DATE(t.transaction_time) >= ?  -- 시작 날짜 (날짜만 비교)

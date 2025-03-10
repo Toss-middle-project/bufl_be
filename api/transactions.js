@@ -175,10 +175,9 @@ router.post("/transfer", async (req, res) => {
         throw new Error("연동된 계좌가 없습니다.");
       }
 
-      const [toAccount] = await db.query(
-        "SELECT * FROM account WHERE account_id = ?",
-        [toAccountId]
-      );
+      const [toAccount] = await db.query("SELECT * FROM account WHERE id = ?", [
+        toAccountId,
+      ]);
 
       if (toAccount.length === 0) {
         throw new Error("입금 계좌를 찾을 수 없습니다.");
@@ -292,10 +291,9 @@ router.get("/history", async (req, res) => {
 
     const fromAccountId = salaryAccount[0].account_id;
 
-    const [fromAccout] = await db.query(
-      "SELECT * FROM account WHERE account_id = ?",
-      [fromAccountId]
-    );
+    const [fromAccout] = await db.query("SELECT * FROM account WHERE id = ?", [
+      fromAccountId,
+    ]);
     const fromAccountNumber = fromAccout[0].account_number;
 
     const [histories] = await db.query(

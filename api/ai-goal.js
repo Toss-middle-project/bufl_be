@@ -218,7 +218,7 @@ router.post("/generate-goals", async (req, res) => {
 
     // 목표 생성 후 자동이체 실행 로직 추가
     const [accountResult] = await db.query(
-      `SELECT account_number, balance FROM account WHERE account_id = ?`,
+      `SELECT account_number, balance FROM account WHERE id = ?`,
       [accountId]
     );
 
@@ -228,14 +228,14 @@ router.post("/generate-goals", async (req, res) => {
       const newBalance = account.balance - monthly_saving;
 
       // 계좌 잔액 업데이트
-      await db.query(`UPDATE account SET balance = ? WHERE account_id = ?`, [
+      await db.query(`UPDATE account SET balance = ? WHERE id = ?`, [
         newBalance,
         accountId,
       ]);
 
       // 목표 금액 업데이트
       await db.query(
-        `UPDATE goal SET current_amount = current_amount + ? WHERE goal_id = ?`,
+        `UPDATE goal SET current_amount = current_amount + ? WHERE id = ?`,
         [monthly_saving, result.insertId]
       );
 

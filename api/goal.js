@@ -117,7 +117,7 @@ router.post("/", async (req, res) => {
 
     // 계좌 정보 확인
     const [accountResult] = await db.query(
-      `SELECT account_number, balance FROM account WHERE account_id = ? AND user_id = ?`,
+      `SELECT account_number, balance FROM account WHERE id = ? AND user_id = ?`,
       [account_id, userId]
     );
 
@@ -155,13 +155,13 @@ router.post("/", async (req, res) => {
       const newBalance = account.balance - monthly_saving;
 
       // 계좌 잔액 차감
-      await db.query(`UPDATE account SET balance = ? WHERE account_id = ?`, [
+      await db.query(`UPDATE account SET balance = ? WHERE id = ?`, [
         newBalance,
         account_id,
       ]);
 
       // 목표 금액 업데이트
-      await db.query(`UPDATE goal SET current_amount = ? WHERE goal_id = ?`, [
+      await db.query(`UPDATE goal SET current_amount = ? WHERE id = ?`, [
         monthly_saving,
         goalId,
       ]);
@@ -341,7 +341,7 @@ router.get("/:goal_id/transactions", async (req, res) => {
   try {
     // 목표 확인 쿼리
     const [goalResult] = await db.query(
-      `SELECT goal_name FROM goal WHERE goal_id = ?`,
+      `SELECT goal_name FROM goal WHERE id = ?`,
       [goal_id]
     );
     if (goalResult.length === 0) {
@@ -449,7 +449,7 @@ router.post("/:goal_id/deposit", async (req, res) => {
   try {
     // 목표 정보 조회
     const [goalResult] = await db.query(
-      `SELECT goal_amount, account_id, current_amount, goal_name FROM goal WHERE goal_id = ?`,
+      `SELECT goal_amount, account_id, current_amount, goal_name FROM goal WHERE id = ?`,
       [goal_id]
     );
 
@@ -469,7 +469,7 @@ router.post("/:goal_id/deposit", async (req, res) => {
 
     // 계좌 정보 조회 (계좌 번호를 가져오기 위해 account 테이블 조회)
     const [accountResult] = await db.query(
-      `SELECT account_number, balance FROM account WHERE account_id = ?`,
+      `SELECT account_number, balance FROM account WHERE id = ?`,
       [account_id]
     );
 
@@ -487,7 +487,7 @@ router.post("/:goal_id/deposit", async (req, res) => {
 
     // 계좌에서 입금 처리
     const newBalance = accountBalance - deposit_amount;
-    await db.query(`UPDATE account SET balance = ? WHERE account_id = ?`, [
+    await db.query(`UPDATE account SET balance = ? WHERE id = ?`, [
       newBalance,
       account_id,
     ]);
@@ -506,7 +506,7 @@ router.post("/:goal_id/deposit", async (req, res) => {
     );
 
     // 목표 금액 업데이트
-    await db.query(`UPDATE goal SET current_amount = ? WHERE goal_id = ?`, [
+    await db.query(`UPDATE goal SET current_amount = ? WHERE id = ?`, [
       newAmount,
       goal_id,
     ]);
