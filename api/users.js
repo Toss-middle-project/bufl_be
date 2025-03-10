@@ -147,7 +147,7 @@ router.put("/update-password", async (req, res) => {
     if (userPassword) {
       const hashedPassword = await bcrypt.hash(userPassword, 10);
 
-      await db.query("UPDATE users SET user_password = ? WHERE user_id = ? ", [
+      await db.query("UPDATE users SET user_password = ? WHERE id = ? ", [
         hashedPassword,
         userId,
       ]);
@@ -182,7 +182,7 @@ router.get("/pin", async (req, res) => {
 
 /**
  * @swagger
- * api/users//pin:
+ * api/users/pin:
  *   post:
  *     summary: PIN 번호 인증
  *     description: 사용자가 입력한 PIN 번호를 검증
@@ -221,7 +221,7 @@ router.post("/pin", async (req, res) => {
       if (session.length === 0)
         return res.status(401).json({ message: "세션 만료됨" });
 
-      const [user] = await db.query("SELECT * FROM users WHERE user_id = ?", [
+      const [user] = await db.query("SELECT * FROM users WHERE id = ?", [
         session[0].user_id,
       ]);
 
@@ -249,7 +249,7 @@ router.post("/pin", async (req, res) => {
 // 월급 정보
 /**
  * @swagger
- * /salary:
+ * api/users/salary:
  *   get:
  *     summary: "사용자의 월급 정보 조회"
  *     description: "로그인된 사용자의 월급 정보(계좌 정보, 금액, 지급일)를 조회합니다."
@@ -323,7 +323,7 @@ router.get("/salary", async (req, res) => {
 
     const salaryAccountId = salary[0].account_id;
     const [salaryAccount] = await db.query(
-      "SELECT bank_name, account_number FROM account WHERE account_id = ?",
+      "SELECT bank_name, account_number FROM account WHERE id = ?",
       [salaryAccountId]
     );
 
@@ -416,7 +416,7 @@ router.post("/salary", async (req, res) => {
     }
 
     const [userResult] = await db.query(
-      "SELECT user_id FROM account WHERE account_id = ?",
+      "SELECT user_id FROM account WHERE id = ?",
       [accountId]
     );
     if (userResult.length === 0) {
@@ -603,9 +603,7 @@ router.delete("/delete", async (req, res) => {
     await db.query("DELETE FROM salary WHERE user_id = ?", [userId]);
     await db.query("DELETE FROM interests WHERE user_id = ?", [userId]);
 
-    const [result] = await db.query("DELETE FROM users WHERE user_id = ?", [
-      userId,
-    ]);
+    const [result] = await db.query("DELETE FROM users WHERE id = ?", [userId]);
     // 2. 사용자 계정 삭제
     if (result.affectedRows === 0) {
       return res.status(404).json({ message: "회원 정보를 찾을 수 없습니다." });

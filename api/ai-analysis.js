@@ -351,7 +351,7 @@ router.get("/", async (req, res) => {
 
     const userId = session[0].user_id;
     const [transactions] = await db.query(
-      "SELECT * FROM transaction WHERE account_id IN (SELECT account_id FROM account WHERE user_id = ?) AND inout_type = 'OUT'",
+      "SELECT * FROM transaction WHERE account_id IN (SELECT id FROM account WHERE user_id = ?) AND inout_type = 'OUT'",
       [userId]
     );
 

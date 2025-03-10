@@ -215,7 +215,7 @@ router.get("/:account_id/transactions", async (req, res) => {
         t.tran_balance_amt,
         t.transaction_time
       FROM transaction t
-      JOIN account a ON a.account_id = t.account_id
+      JOIN account a ON a.id = t.account_id
       WHERE a.user_id = ? AND t.account_id = ?`,
       [userId, account_id]
     );
