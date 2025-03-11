@@ -281,7 +281,7 @@ router.get("/", async (req, res) => {
           elapsedMonths
         )
       );
-      return { ...goal, probability: `${probability}%` };
+      return { ...goal, probability: probability };
     });
 
     res.status(200).json({ message: "목표 내역", goals: goalsWithProbability });
@@ -432,8 +432,7 @@ router.get("/:id", async (req, res) => {
  *                         type: string
  *                         example: "85%"
  */
-
-router.get("/prediction", async (req, res) => {
+router.get("/:id/prediction", async (req, res) => {
   const sessionId = req.cookies.sessionId;
   if (!sessionId) return res.status(401).json({ message: "세션 없음" });
 
@@ -442,20 +441,26 @@ router.get("/prediction", async (req, res) => {
       "SELECT user_id FROM sessions WHERE session_id = ?",
       [sessionId]
     );
-    //session  없으면 만료
+    // session 없으면 만료
     if (session.length === 0)
       return res.status(401).json({ message: "세션 만료됨" });
-    //user 정보
+
+    // user 정보
     const userId = session[0].user_id;
-    const [results] = await db.query(`SELECT * FROM goal WHERE user_id = ?`, [
-      userId,
-    ]);
+    const goalId = req.params.id; // URL 파라미터에서 goal_id 받기
+
+    const [results] = await db.query(
+      `SELECT * FROM goal WHERE user_id = ? AND id = ?`,
+      [userId, goalId]
+    );
+    console.log("Goal Info for Prediction:", results);
 
     if (results.length === 0) {
       return res.status(404).json({ message: "목표 내역이 없습니다." });
     }
 
-    const goalProbabilities = results.map((goal) => {
+    // 목표별 확률 값만 추출
+    const probabilities = results.map((goal) => {
       const elapsedMonths = getElapsedMonths(goal.goal_start);
       const probability = Math.round(
         calculateGoalCompletionProbability(
@@ -465,18 +470,11 @@ router.get("/prediction", async (req, res) => {
           elapsedMonths
         )
       );
-
-      return {
-        goal_id: goal.goal_id,
-        current_amount: goal.current_amount,
-        goal_name: goal.goal_name,
-        probability: `${probability}%`,
-      };
+      return { goal_id: goal.goal_id, probability: `${probability}%` };
     });
 
-    res
-      .status(200)
-      .json({ message: "목표 달성 확률", goals: goalProbabilities });
+    // 확률 값만 응답
+    res.status(200).json({ message: "목표 달성 확률", probabilities });
   } catch (err) {
     console.error(err);
     res.status(500).json({ message: "서버 오류" });
