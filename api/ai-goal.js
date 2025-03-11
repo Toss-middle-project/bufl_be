@@ -172,9 +172,6 @@ router.post("/generate-goals", async (req, res) => {
 
   const goals = aiResponse.recommendations;
 
-  console.log("selectedGoalIndex:", selectedGoalIndex); // 디버깅: 인덱스 값 확인
-  console.log("Goals Length:", goals.length); // 디버깅: AI 추천 목표 목록 길이 확인
-
   if (!goals || goals.length === 0) {
     return res.status(400).json({ message: "AI에서 추천한 목표가 없습니다." });
   }
@@ -212,9 +209,8 @@ router.post("/generate-goals", async (req, res) => {
       ]
     );
 
-    console.log(
-      `목표 "${goal_name}"이 성공적으로 저장되었습니다. (ID: ${result.insertId})`
-    );
+    // 생성된 goal_id를 클라이언트에 반환
+    const goalId = result.insertId;
 
     // 목표 생성 후 자동이체 실행 로직 추가
     const [accountResult] = await db.query(
@@ -236,7 +232,7 @@ router.post("/generate-goals", async (req, res) => {
       // 목표 금액 업데이트
       await db.query(
         `UPDATE goal SET current_amount = current_amount + ? WHERE id = ?`,
-        [monthly_saving, result.insertId]
+        [monthly_saving, goalId]
       );
 
       // 트랜잭션 기록
@@ -251,16 +247,13 @@ router.post("/generate-goals", async (req, res) => {
           newBalance,
         ]
       );
-
-      console.log(
-        `자동이체 완료: 목표 ${result.insertId}, 금액: ${monthly_saving}, 잔액: ${newBalance}`
-      );
     } else {
-      console.log(`목표 ${result.insertId}: 잔액 부족, 자동이체 실행되지 않음`);
+      console.log(`목표 ${goalId}: 잔액 부족, 자동이체 실행되지 않음`);
     }
 
     res.status(200).json({
       message: "선택된 목표가 성공적으로 저장되었습니다.",
+      goalId, // 생성된 goal_id 반환
       goal: selectedGoal,
     });
   } catch (error) {
