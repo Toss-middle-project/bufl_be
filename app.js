@@ -16,6 +16,17 @@ const cookieParser = require("cookie-parser");
 const app = express();
 const port = 5000;
 
+app.get("/", async (req, res) => {
+  console.log("hello");
+});
+
+app.listen(port, () => {
+  console.log("✅ 서버 실행 중: http://localhost:5000");
+  console.log("📄 Swagger 문서: http://localhost:5000/api-docs");
+});
+
+/*
+
 // app.use(cors());
 app.use(express.json());
 app.use(cookieParser());
@@ -70,3 +81,4 @@ app.listen(port, () => {
 // }
 
 // main().catch(console.error);
+*/
