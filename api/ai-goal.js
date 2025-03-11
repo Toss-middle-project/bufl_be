@@ -70,35 +70,59 @@ async function getGoalRecommendations(req) {
  * /api/ai-goals:
  *   get:
  *     tags: [Ai]
- *     summary: AI 추천 목표 목록 가져오기
- *     description: AI로부터 추천된 저축 목표 목록을 반환합니다.
+ *     summary: "AI 추천 목표 목록을 가져오는 API"
+ *     description: "AI로부터 추천받은 목표 목록을 가져와서 응답으로 반환합니다."
  *     responses:
  *       200:
- *         description: 목표 목록을 성공적으로 가져왔습니다.
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                 recommendations:
- *                   type: array
- *                   items:
- *                     type: object
- *                     properties:
- *                       goal_name:
- *                         type: string
- *                       goal_amount:
- *                         type: number
- *                       goal_duration:
- *                         type: number
- *                       monthly_saving:
- *                         type: number
+ *         description: "AI 추천 목표 목록을 성공적으로 가져왔습니다."
+ *         schema:
+ *           type: "object"
+ *           properties:
+ *             message:
+ *               type: "string"
+ *               example: "AI 추천 목표 목록을 성공적으로 가져왔습니다."
+ *             recommendations:
+ *               type: "array"
+ *               items:
+ *                 type: "object"
+ *                 properties:
+ *                   goal_name:
+ *                     type: "string"
+ *                   goal_amount:
+ *                     type: "number"
+ *                     format: "float"
+ *                   goal_duration:
+ *                     type: "integer"
+ *                   goal_start:
+ *                     type: "string"
+ *                     format: "date-time"
+ *                   goal_end:
+ *                     type: "string"
+ *                     format: "date-time"
  *       400:
- *         description: AI에서 추천한 목표가 없습니다.
+ *         description: "AI에서 추천한 목표가 없습니다."
+ *         schema:
+ *           type: "object"
+ *           properties:
+ *             message:
+ *               type: "string"
+ *               example: "AI에서 추천한 목표가 없습니다."
+ *       401:
+ *         description: "세션 오류 (세션 없음)"
+ *         schema:
+ *           type: "object"
+ *           properties:
+ *             message:
+ *               type: "string"
+ *               example: "세션 없음"
  *       500:
- *         description: 목표 목록을 가져오는 중 오류가 발생했습니다.
+ *         description: "서버 오류 (AI 추천 목표 목록 가져오기 실패)"
+ *         schema:
+ *           type: "object"
+ *           properties:
+ *             message:
+ *               type: "string"
+ *               example: "목표 추천 목록을 가져오는 중 오류가 발생했습니다."
  */
 // AI 추천 목표 목록 가져오기 (GET)
 router.get("/", async (req, res) => {
@@ -132,26 +156,86 @@ router.get("/", async (req, res) => {
  * /api/ai-goals/generate-goals:
  *   post:
  *     tags: [Ai]
- *     summary: 추천 목표 저장하기
- *     description: 사용자가 선택한 목표를 데이터베이스에 저장하고 자동이체를 실행합니다.
- *     requestBody:
- *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               selectedGoalIndex:
- *                 type: number
- *               accountId:
- *                 type: number
+ *     summary: "AI가 추천한 목표를 저장하고, 자동이체를 실행하는 API"
+ *     description: "사용자가 선택한 목표를 저장하고, 해당 목표에 맞춰 자동이체를 실행합니다."
+ *     consumes:
+ *       - "application/json"
+ *     parameters:
+ *       - in: "body"
+ *         name: "body"
+ *         description: "AI 추천 목표 생성 요청 데이터"
+ *         required: true
+ *         schema:
+ *           type: "object"
+ *           properties:
+ *             goal_name:
+ *               type: "string"
+ *               description: "저축 목표 이름"
+ *             monthly_saving:
+ *               type: "number"
+ *               format: "float"
+ *               description: "매월 저축액"
+ *             goal_duration:
+ *               type: "integer"
+ *               description: "저축 목표 기간 (개월)"
+ *             accountId:
+ *               type: "integer"
+ *               description: "저축을 위한 계좌 ID"
+ *             selectedGoalIndex:
+ *               type: "integer"
+ *               description: "AI 추천 목표 중 선택된 목표의 인덱스"
  *     responses:
  *       200:
- *         description: 목표가 성공적으로 저장되었습니다.
+ *         description: "목표가 성공적으로 저장되었습니다."
+ *         schema:
+ *           type: "object"
+ *           properties:
+ *             message:
+ *               type: "string"
+ *               example: "선택된 목표가 성공적으로 저장되었습니다."
+ *             goalId:
+ *               type: "integer"
+ *               description: "생성된 목표의 ID"
+ *             goal:
+ *               type: "object"
+ *               properties:
+ *                 goal_name:
+ *                   type: "string"
+ *                 goal_amount:
+ *                   type: "number"
+ *                   format: "float"
+ *                 goal_duration:
+ *                   type: "integer"
+ *                 goal_start:
+ *                   type: "string"
+ *                   format: "date-time"
+ *                 goal_end:
+ *                   type: "string"
+ *                   format: "date-time"
  *       400:
- *         description: 유효하지 않은 선택된 목표
+ *         description: "잘못된 요청 (필수 필드 누락 또는 목표 인덱스 오류)"
+ *         schema:
+ *           type: "object"
+ *           properties:
+ *             message:
+ *               type: "string"
+ *               example: "모든 필드를 입력해주세요."
+ *       401:
+ *         description: "세션 오류 (세션 없음 또는 세션 만료)"
+ *         schema:
+ *           type: "object"
+ *           properties:
+ *             message:
+ *               type: "string"
+ *               example: "세션 없음"
  *       500:
- *         description: 목표 저장 중 오류가 발생했습니다.
+ *         description: "서버 오류 (목표 추천 또는 DB 저장 실패)"
+ *         schema:
+ *           type: "object"
+ *           properties:
+ *             message:
+ *               type: "string"
+ *               example: "목표 추천 또는 저장 중 오류가 발생했습니다."
  */
 router.post("/generate-goals", async (req, res) => {
   const sessionId = req.cookies.sessionId;
