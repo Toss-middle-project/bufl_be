@@ -46,7 +46,7 @@ app.use("/api/ai-analysis", aiAnalysisRouter);
 
 app.get("/", async (req, res) => {
   try {
-    if (req.session.user) {
+    if (req.cookies.sessionId) {
       // 회원가입 한 경우 로그인 화면으로 넘어감
       res.redirect("/api/users/login");
     } else {
