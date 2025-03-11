@@ -309,34 +309,50 @@ router.post("/recommend", async (req, res) => {
 
     const userId = session[0].user_id;
     const recommendResult = req.session.recommendResult;
+    const colorList = [
+      "#FF6B86",
+      "#BDEEB6",
+      "#FFF58A",
+      "#FFB1E0",
+      "#5EB961",
+      "#6BF8F6",
+      "#C767D0",
+    ];
+
     console.log(recommendResult);
 
-    const values = recommendResult.map((category) => {
+    const values = recommendResult.map((category, index) => {
       return [
         userId,
         category.name,
         category.goal_amount || 0,
-        category.background_color || "#DAEBF8",
+        category.background_color || colorList[index % colorList.length], // index를 사용
         category.ratio,
         category.amount,
       ];
     });
+
+    // 이미 존재하는 카테고리 확인
     const [existCategories] = await db.query(
-      "SELECT * FROM categories WHERE user_id = ? ",
+      "SELECT * FROM categories WHERE user_id = ?",
       [userId]
     );
 
+    // 기존 카테고리 삭제
     if (existCategories.length > 0) {
       await db.query("DELETE FROM categories WHERE user_id = ?", [userId]);
     }
 
+    // 카테고리 추가
     const [result] = await db.query(
       "INSERT INTO categories (user_id, name, goal_amount, background_color, ratio, amount) VALUES ?",
       [values]
     );
 
+    // 세션에서 추천 결과 삭제
     delete req.session.recommendResult;
 
+    // 성공 응답
     res.status(201).json({
       message: `${recommendResult.length}개의 카테고리가 추가되었습니다.`,
     });
