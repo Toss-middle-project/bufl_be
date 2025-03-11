@@ -167,6 +167,7 @@ async function consumptionPattern(transactions) {
         {
           role: "user",
           content: `3개월 간 사용자의 거래내역을 분석하여 소비 패턴을 분석하여 JSON 형식으로만 응답  
+          패턴 개수는 4개 ~ 9개 사이로만 응답
           거래내역: ${JSON.stringify(transactionSummary)} 
           응답에 다음 구조를 사용하세요. JSON 형식으로만 응답하시오. 줄바꿈 문자을 넣지 말고, 줄바꿈하지 마시오.
           {
@@ -209,6 +210,7 @@ async function recommendRatio(salary, interests, transactions) {
         {
           role: "user",
           content: `사용자의 관심사와 소비 패턴을 분석하여 통장(월급)쪼개기를 위한 카테고리와 비율(월급통장 포함)을 JSON 형식으로만 응답
+          카테고리 개수는 3개 ~ 6개 사이로만 응답
   
           관심사: ${interestSummary}
           소비습관(소비패턴) : ${JSON.stringify(transactions)}
