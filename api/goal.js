@@ -127,7 +127,7 @@ router.post("/", async (req, res) => {
     const monthly_saving_amt = monthly_saving * 10000;
     const account = accountResult[0]; // 계좌 정보
     const goal_amount = monthly_saving_amt * goal_duration;
-    const dynamicGoalName = `${goal_amount} 모으기`;
+    const dynamicGoalName = `${goal_amount / 10000} 만원 모으기`;
 
     // 목표 저장
     const [result] = await db.query(
