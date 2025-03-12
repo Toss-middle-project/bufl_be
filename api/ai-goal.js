@@ -30,18 +30,18 @@ async function getGoalRecommendations(req) {
         {
           role: "user",
           content: `저축 목표를 추천해주세요. 목표 금액은 50만원에서 300만원 사이로 설정하고, 기간은 3개월에서 36개월 사이로 설정해주세요.
-           각 목표에 대해 4개 정도의 추천 목표를 생성해주세요.
+           각 목표에 대해 4개만 추천 목표를 생성해주세요.
            형식은 예를들어
            recommendations: [
               {
-                id:1,
+                id:0,
                 goal_name: '여행 자금 마련',
                 goal_amount: 800000,
                 goal_duration: 3,
                 monthly_saving: 250000
               },
               {
-                id:2,
+                id:1,
                 goal_name: '겨울 패딩 구매',
                 goal_amount: 500000,
                 goal_duration: 5,
@@ -153,90 +153,96 @@ router.get("/", async (req, res) => {
 
 /**
  * @swagger
- * /api/ai-goals/generate-goals:
- *   post:
- *     tags: [Ai]
- *     summary: "AI가 추천한 목표를 저장하고, 자동이체를 실행하는 API"
- *     description: "사용자가 선택한 목표를 저장하고, 해당 목표에 맞춰 자동이체를 실행합니다."
- *     consumes:
- *       - "application/json"
- *     parameters:
- *       - in: "body"
- *         name: "body"
- *         description: "AI 추천 목표 생성 요청 데이터"
+ *   /api/ai-goals/generate-goals:
+ *     post:
+ *       tags: [Ai]
+ *       summary: 사용자가 선택한 목표를 생성하고 자동이체를 실행합니다.
+ *       description: 사용자가 선택한 목표 정보를 기반으로 목표를 생성하고, 자동이체가 실행됩니다.
+ *       requestBody:
  *         required: true
- *         schema:
- *           type: "object"
- *           properties:
- *             goal_name:
- *               type: "string"
- *               description: "저축 목표 이름"
- *             monthly_saving:
- *               type: "number"
- *               format: "float"
- *               description: "매월 저축액"
- *             goal_duration:
- *               type: "integer"
- *               description: "저축 목표 기간 (개월)"
- *             accountId:
- *               type: "integer"
- *               description: "저축을 위한 계좌 ID"
- *             selectedGoalIndex:
- *               type: "integer"
- *               description: "AI 추천 목표 중 선택된 목표의 인덱스"
- *     responses:
- *       200:
- *         description: "목표가 성공적으로 저장되었습니다."
- *         schema:
- *           type: "object"
- *           properties:
- *             message:
- *               type: "string"
- *               example: "선택된 목표가 성공적으로 저장되었습니다."
- *             goalId:
- *               type: "integer"
- *               description: "생성된 목표의 ID"
- *             goal:
- *               type: "object"
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
  *               properties:
  *                 goal_name:
- *                   type: "string"
- *                 goal_amount:
- *                   type: "number"
- *                   format: "float"
+ *                   type: string
+ *                   description: 목표 이름
+ *                   example: string
+ *                 monthly_saving:
+ *                   type: number
+ *                   description: 월 저축액
+ *                   example: 0
  *                 goal_duration:
- *                   type: "integer"
- *                 goal_start:
- *                   type: "string"
- *                   format: "date-time"
- *                 goal_end:
- *                   type: "string"
- *                   format: "date-time"
- *       400:
- *         description: "잘못된 요청 (필수 필드 누락 또는 목표 인덱스 오류)"
- *         schema:
- *           type: "object"
- *           properties:
- *             message:
- *               type: "string"
- *               example: "모든 필드를 입력해주세요."
- *       401:
- *         description: "세션 오류 (세션 없음 또는 세션 만료)"
- *         schema:
- *           type: "object"
- *           properties:
- *             message:
- *               type: "string"
- *               example: "세션 없음"
- *       500:
- *         description: "서버 오류 (목표 추천 또는 DB 저장 실패)"
- *         schema:
- *           type: "object"
- *           properties:
- *             message:
- *               type: "string"
- *               example: "목표 추천 또는 저장 중 오류가 발생했습니다."
+ *                   type: number
+ *                   description: 목표 기간 (개월)
+ *                   example: 0
+ *                 accountId:
+ *                   type: integer
+ *                   description: 계좌 ID
+ *                   example: 0
+ *       responses:
+ *         200:
+ *           description: 목표가 성공적으로 저장되었습니다.
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   message:
+ *                     type: string
+ *                     example: "선택된 목표가 성공적으로 저장되었습니다."
+ *                   goalId:
+ *                     type: integer
+ *                     description: 생성된 목표 ID
+ *                     example: 123
+ *                   goal:
+ *                     type: object
+ *                     properties:
+ *                       goal_name:
+ *                         type: string
+ *                         example: "여행 저축"
+ *                       goal_amount:
+ *                         type: number
+ *                         example: 1200000
+ *                       goal_duration:
+ *                         type: number
+ *                         example: 12
+ *                       monthly_saving:
+ *                         type: number
+ *                         example: 100000
+ *         400:
+ *           description: 필수 값이 부족하거나 잘못된 요청
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   message:
+ *                     type: string
+ *                     example: "목표 이름, 계좌 ID, 월 저축액, 목표 기간은 필수입니다."
+ *         401:
+ *           description: 세션 없음 또는 세션 만료됨
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   message:
+ *                     type: string
+ *                     example: "세션 없음"
+ *         500:
+ *           description: 서버 오류
+ *           content:
+ *             application/json:
+ *               schema:
+ *                 type: object
+ *                 properties:
+ *                   message:
+ *                     type: string
+ *                     example: "목표 추천 또는 저장 중 오류가 발생했습니다."
  */
+
 router.post("/generate-goals", async (req, res) => {
   const sessionId = req.cookies.sessionId;
   if (!sessionId) return res.status(401).json({ message: "세션 없음" });
@@ -251,40 +257,29 @@ router.post("/generate-goals", async (req, res) => {
 
   const userId = session[0].user_id;
 
-  // AI가 전달한 값 받기
+  // 클라이언트로부터 선택된 목표 값 받기
   const { goal_name, monthly_saving, goal_duration, accountId } = req.body;
 
-  if (!goal_name || !monthly_saving || !goal_duration || !accountId) {
-    return res.status(400).json({ message: "모든 필드를 입력해주세요." });
+  // 필수 값 확인
+  if (!goal_name || !accountId || !monthly_saving || !goal_duration) {
+    return res.status(400).json({
+      message: "목표 이름, 계좌 ID, 월 저축액, 목표 기간은 필수입니다.",
+    });
   }
 
+  // goal_amount는 monthly_saving과 goal_duration에 따라 계산됨
+  const goal_amount = monthly_saving * goal_duration;
+
   try {
-    const aiResponse = await getGoalRecommendations(req); // AI로부터 추천 받은 목표들
-    const selectedGoalIndex = req.body.selectedGoalIndex;
-    const goals = aiResponse.recommendations;
+    let newGoalId;
 
-    if (!goals || goals.length === 0) {
-      return res
-        .status(400)
-        .json({ message: "AI에서 추천한 목표가 없습니다." });
-    }
-
-    if (selectedGoalIndex < 0 || selectedGoalIndex >= goals.length) {
-      return res
-        .status(400)
-        .json({ message: "선택된 목표가 유효하지 않습니다." });
-    }
-
-    const selectedGoal = goals[selectedGoalIndex];
-    const { goal_amount } = selectedGoal;
-
-    // 목표 저장
+    // 새로운 목표를 생성
     const [result] = await db.query(
       `INSERT INTO goal (goal_name, goal_amount, goal_duration, goal_start, goal_end, user_id, account_id, monthly_saving)
-       VALUES (?, ?, ?, CURRENT_TIMESTAMP, DATE_ADD(CURRENT_TIMESTAMP, INTERVAL ? MONTH), ?, ?, ?);`,
+         VALUES (?, ?, ?, CURRENT_TIMESTAMP, DATE_ADD(CURRENT_TIMESTAMP, INTERVAL ? MONTH), ?, ?, ?);`,
       [
         goal_name,
-        goal_amount,
+        goal_amount, // 계산된 goal_amount 사용
         goal_duration,
         goal_duration,
         userId,
@@ -292,8 +287,7 @@ router.post("/generate-goals", async (req, res) => {
         monthly_saving,
       ]
     );
-
-    const goalId = result.insertId;
+    newGoalId = result.insertId; // 자동 생성된 goalId
 
     // 목표 생성 후 자동이체 실행 로직 추가
     const [accountResult] = await db.query(
@@ -315,7 +309,7 @@ router.post("/generate-goals", async (req, res) => {
       // 목표 금액 업데이트
       await db.query(
         `UPDATE goal SET current_amount = current_amount + ? WHERE id = ?`,
-        [monthly_saving, goalId]
+        [monthly_saving, newGoalId]
       );
 
       // 트랜잭션 기록
@@ -331,13 +325,18 @@ router.post("/generate-goals", async (req, res) => {
         ]
       );
     } else {
-      console.log(`목표 ${goalId}: 잔액 부족, 자동이체 실행되지 않음`);
+      console.log(`목표 ${newGoalId}: 잔액 부족, 자동이체 실행되지 않음`);
     }
 
     res.status(200).json({
       message: "선택된 목표가 성공적으로 저장되었습니다.",
-      goalId, // 생성된 goal_id 반환
-      goal: selectedGoal,
+      goalId: newGoalId, // 생성된 goal_id 반환
+      goal: {
+        goal_name,
+        goal_amount, // 계산된 goal_amount
+        goal_duration,
+        monthly_saving,
+      },
     });
   } catch (error) {
     console.error("목표 추천 또는 DB 저장 실패:", error);
