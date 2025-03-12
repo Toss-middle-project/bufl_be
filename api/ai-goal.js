@@ -266,9 +266,9 @@ router.post("/generate-goals", async (req, res) => {
       message: "목표 이름, 계좌 ID, 월 저축액, 목표 기간은 필수입니다.",
     });
   }
-
+  const monthly_saving_amt = monthly_saving * 10000;
   // goal_amount는 monthly_saving과 goal_duration에 따라 계산됨
-  const goal_amount = monthly_saving * goal_duration;
+  const goal_amount = monthly_saving_amt * goal_duration;
 
   try {
     let newGoalId;
@@ -284,7 +284,7 @@ router.post("/generate-goals", async (req, res) => {
         goal_duration,
         userId,
         accountId,
-        monthly_saving,
+        monthly_saving_amt,
       ]
     );
     newGoalId = result.insertId; // 자동 생성된 goalId
@@ -297,8 +297,8 @@ router.post("/generate-goals", async (req, res) => {
 
     const account = accountResult[0];
 
-    if (account.balance >= monthly_saving) {
-      const newBalance = account.balance - monthly_saving;
+    if (account.balance >= monthly_saving_amt) {
+      const newBalance = account.balance - monthly_saving_amt;
 
       // 계좌 잔액 업데이트
       await db.query(`UPDATE account SET balance = ? WHERE id = ?`, [
@@ -309,7 +309,7 @@ router.post("/generate-goals", async (req, res) => {
       // 목표 금액 업데이트
       await db.query(
         `UPDATE goal SET current_amount = current_amount + ? WHERE id = ?`,
-        [monthly_saving, newGoalId]
+        [monthly_saving_amt, newGoalId]
       );
 
       // 트랜잭션 기록
@@ -320,7 +320,7 @@ router.post("/generate-goals", async (req, res) => {
           accountId,
           account.account_number,
           goal_name, // goal_name을 사용하여 트랜잭션 기록
-          monthly_saving,
+          monthly_saving_amt,
           newBalance,
         ]
       );
@@ -335,7 +335,7 @@ router.post("/generate-goals", async (req, res) => {
         goal_name,
         goal_amount, // 계산된 goal_amount
         goal_duration,
-        monthly_saving,
+        monthly_saving_amt,
       },
     });
   } catch (error) {
