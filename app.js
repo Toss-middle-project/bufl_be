@@ -10,7 +10,7 @@ const transactionsRouter = require("./api/transactions");
 const expensesRouter = require("./api/expenses"); // 소비내역 가져오기
 const goalRouter = require("./routes/goal-routes"); // 목표
 const aiAnalysisRouter = require("./routes/analysis-routes.js");
-const goalAI = require("./api/ai-goal.js"); // goalai.js에서 router 가져오기
+const goalAI = require("./routes/aigoal-routes"); // goalai.js에서 router 가져오기
 
 const app = express();
 const port = 5000;
