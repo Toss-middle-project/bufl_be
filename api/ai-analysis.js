@@ -1,5 +1,5 @@
 const express = require("express");
-const session = require("express-session");
+// const session = require("express-session");
 const router = express.Router();
 const db = require("../db/db");
 
@@ -9,6 +9,9 @@ const apiKey = process.env.ANTHROPIC_API_KEY;
 const anthropic = new Anthropic({
   apiKey: apiKey,
 });
+
+const analysisStore = new Map();
+const recommendStore = new Map();
 /**
  * @swagger
  * /api/ai-analysis/recommend:
@@ -199,8 +202,6 @@ async function recommendRatio(salary, interests, transactions) {
   try {
     const interestSummary = interests[0].name;
 
-    // const analysisSummary = await consumptionPattern(transactions);
-
     const response = await anthropic.messages.create({
       model: "claude-3-7-sonnet-20250219",
       max_tokens: 1000,
@@ -267,10 +268,6 @@ router.get("/recommend", async (req, res) => {
       "SELECT * FROM interests WHERE user_id = ?",
       [userId]
     );
-    // const [transactions] = await db.query(
-    //   "SELECT * FROM transaction WHERE account_id IN (SELECT account_id FROM account WHERE user_id = ?) AND inout_type = 'OUT'",
-    //   [userId]
-    // );
 
     const [salaryInfo] = await db.query(
       "SELECT * FROM salary WHERE user_id = ?",
@@ -278,15 +275,15 @@ router.get("/recommend", async (req, res) => {
     );
 
     const salary = salaryInfo[0].amount;
-    const transactions = req.session.analysisResult;
+    const transactions = analysisStore.get(userId);
+
     const recommendResult = await recommendRatio(
       salary,
       interests,
       transactions
     );
 
-    delete req.session.transactions;
-    req.session.recommendResult = recommendResult.recommendRatio;
+    recommendStore.set(userId, recommendResult.recommendRatio);
 
     res.send(recommendResult);
   } catch (err) {
@@ -294,7 +291,7 @@ router.get("/recommend", async (req, res) => {
   }
 });
 
-router.post("/recommend", async (req, res) => {
+router.get("/add-category", async (req, res) => {
   const sessionId = req.cookies.sessionId;
   if (!sessionId) return res.status(401).json({ message: "세션 없음" });
 
@@ -308,7 +305,8 @@ router.post("/recommend", async (req, res) => {
       return res.status(401).json({ message: "세션 만료됨" });
 
     const userId = session[0].user_id;
-    const recommendResult = req.session.recommendResult;
+    const recommendResult = recommendStore.get(userId);
+
     const colorList = [
       "#FF6B86",
       "#BDEEB6",
@@ -320,6 +318,9 @@ router.post("/recommend", async (req, res) => {
     ];
 
     console.log(recommendResult);
+    if (!recommendResult) {
+      return res.status(400).json({ message: "추천 결과 없음" });
+    }
 
     const values = recommendResult.map((category, index) => {
       return [
@@ -348,9 +349,6 @@ router.post("/recommend", async (req, res) => {
       "INSERT INTO categories (user_id, name, goal_amount, background_color, ratio, amount) VALUES ?",
       [values]
     );
-
-    // 세션에서 추천 결과 삭제
-    delete req.session.recommendResult;
 
     // 성공 응답
     res.status(201).json({
@@ -388,7 +386,7 @@ router.get("/", async (req, res) => {
     }
 
     const analysisResult = await consumptionPattern(transactions);
-    req.session.analysisResult = analysisResult;
+    analysisStore.set(userId, analysisResult);
 
     res.send(analysisResult);
   } catch (err) {
