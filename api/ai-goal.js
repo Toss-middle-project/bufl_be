@@ -9,8 +9,11 @@ const apiKey = process.env.ANTHROPIC_API_KEY;
 const anthropic = new Anthropic({ apiKey });
 // AI에게 목표 추천 요청
 // AI로부터 추천 받은 목표를 세션에 저장하는 함수
-async function getGoalRecommendations(req) {
+async function getGoalRecommendations(req, interests) {
   try {
+    const interestSummary =
+      interests.length > 0 ? interests[0]?.name : "여행, 투자, 집"; // 기본 관심사 설정
+
     // 세션에서 이미 데이터가 있는지 확인
     const cachedData = req.session.goalRecommendations;
 
@@ -19,7 +22,6 @@ async function getGoalRecommendations(req) {
       return cachedData;
     }
 
-    // 세션에 데이터가 없으면 AI로부터 데이터를 받아옴
     const response = await anthropic.messages.create({
       model: "claude-3-7-sonnet-20250219",
       max_tokens: 1000,
@@ -29,8 +31,10 @@ async function getGoalRecommendations(req) {
       messages: [
         {
           role: "user",
-          content: `저축 목표를 추천해주세요. 목표 금액은 50만원에서 300만원 사이로 설정하고, 기간은 3개월에서 36개월 사이로 설정해주세요.
+          content: `사용자의 관심사에 따라 저축 목표를 추천해주세요.관심시가 없을 경우엔 자유롭게 추천해주세요. 목표 금액은 50만원에서 300만원 사이로 설정하고, 기간은 3개월에서 36개월 사이로 설정해주세요.
            각 목표에 대해 4개만 추천 목표를 생성해주세요.
+          
+           관심사: ${interestSummary}
            형식은 예를들어
            recommendations: [
               {
@@ -52,7 +56,15 @@ async function getGoalRecommendations(req) {
       ],
     });
 
-    const parsedResponse = JSON.parse(response.content[0].text);
+    // 응답 파싱 (예외 처리 추가)
+    let parsedResponse;
+    try {
+      parsedResponse = JSON.parse(response.content[0]?.text);
+    } catch (error) {
+      console.error("AI 응답 JSON 파싱 오류:", error);
+      throw new Error("AI 응답 JSON 파싱 실패");
+    }
+
     console.log("AI 응답 내용:", parsedResponse);
 
     // 세션에 데이터 저장
@@ -64,14 +76,36 @@ async function getGoalRecommendations(req) {
     throw new Error("AI 목표 추천 실패: " + error.message);
   }
 }
-
 // AI 추천 목표 목록 가져오기 (GET)
 router.get("/", async (req, res) => {
   const sessionId = req.cookies.sessionId;
   if (!sessionId) return res.status(401).json({ message: "세션 없음" });
+
   try {
-    // AI로부터 목표 추천을 받아옵니다.
-    const aiResponse = await getGoalRecommendations(req);
+    // 세션에서 사용자 정보 조회
+    const [session] = await db.query(
+      "SELECT user_id FROM sessions WHERE session_id = ?",
+      [sessionId]
+    );
+
+    // 세션이 없거나 만료된 경우
+    if (session.length === 0)
+      return res.status(401).json({ message: "세션 만료됨" });
+
+    const userId = session[0].user_id;
+
+    // 사용자의 흥미 정보 조회
+    const [interests] = await db.query(
+      "SELECT * FROM interests WHERE user_id = ?",
+      [userId]
+    );
+    console.log(interests);
+
+    // 흥미 정보가 없으면 기본 추천값을 AI에 전달
+    const aiResponse = await getGoalRecommendations(
+      req,
+      interests.length > 0 ? interests : ["여행", "투자", "집"]
+    );
 
     if (!aiResponse || aiResponse.length === 0) {
       return res
