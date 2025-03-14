@@ -9,12 +9,30 @@ exports.getCategories = async (sessionId) => {
   if (session.length === 0) throw new Error("세션 만료됨");
 
   const userId = session[0].user_id;
+  const [salaryAccount] = await db.query(
+    "SELECT bank_name, account_number FROM account WHERE id = (SELECT account_id FROM salary WHERE user_id = ?)",
+    [userId]
+  );
+
   const [categories] = await db.query(
     "SELECT id, name, goal_amount, background_color, ratio, amount FROM categories WHERE user_id = ?",
     [userId]
   );
 
-  return categories;
+  const result = categories.map((category) => {
+    if (category.name === "월급 통장" || category.name === "💰 월급 통장") {
+      return {
+        ...category,
+        bank_name: salaryAccount.length ? salaryAccount[0].bank_name : null,
+        account_number: salaryAccount.length
+          ? salaryAccount[0].account_number
+          : null,
+      };
+    }
+    return category;
+  });
+
+  return result;
 };
 
 exports.getCategoryById = async (categoryId) => {
@@ -78,24 +96,31 @@ exports.getCategoryAccounts = async (sessionId) => {
     [userId]
   );
 
+  if (categories.length == 0) {
+    return res.status(400).json({ message: "카테고리가 없습니다." });
+  }
+
   const categoryAccounts = await Promise.all(
     categories.map(async (category) => {
-      const [account] = await db.query("SELECT *FROM account WHERE id = ?", [
+      const [account] = await db.query("SELECT * FROM account WHERE id = ?", [
         category.account_id,
       ]);
-      return account.length
-        ? {
-            name: category.name,
-            bankName: account[0]?.bank_name || "정보 없음",
-            accountNumber: account[0]?.account_number || "정보 없음",
-            balance: account[0]?.balance || 0,
-            logo: account[0].logo,
-          }
-        : null;
+
+      if (account.length === 0) {
+        return null; // continue 대신 null 반환
+      }
+      return {
+        name: category.name,
+        bankName: account[0]?.bank_name || "정보 없음",
+        accountNumber: account[0]?.account_number || "정보 없음",
+        balance: account[0]?.balance || 0,
+        logo: account[0].logo,
+      };
     })
   );
+  const validAccounts = categoryAccounts.filter((account) => account !== null);
 
-  return categoryAccounts.filter((account) => account !== null);
+  return validAccounts;
 };
 
 exports.linkCategoryToAccount = async (categoryId, accountId) => {

@@ -12,17 +12,26 @@ const goalRouter = require("./routes/goal-routes"); // 목표
 const aiAnalysisRouter = require("./routes/analysis-routes"); //ai 소비 분석 / 카테고리리 비율 추천
 const goalAI = require("./routes/aigoal-routes"); // goalai.js에서 router 가져오기
 
+// const usersRouter = require("./api/users"); // 사용자 라우터 가져오기
+// const accountRouter = require("./api/account"); // 계좌목록 가져오기
+// const salaryRouter = require("./api/salary");
+// const transactionsRouter = require("./api/transactions");
+// const expensesRouter = require("./api/expenses"); // 소비내역 가져오기
+// const goalRouter = require("./api/goal"); // 목표
+// const aiAnalysisRouter = require("./api/ai-analysis.js");
+// const goalAI = require("./api/ai-goal.js"); // goalai.js에서 router 가져오기
 const app = express();
 const port = 5000;
 
-app.use(express.json());
-app.use(cookieParser());
 app.use(
   cors({
     origin: "https://buflfe.vercel.app", // 프론트엔드 주소
     credentials: true, // 쿠키 허용
   })
 );
+
+app.use(express.json());
+app.use(cookieParser());
 
 app.use(
   session({
