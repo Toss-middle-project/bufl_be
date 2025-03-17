@@ -1,5 +1,6 @@
 const transferService = require("../services/transfer-service");
 
+// 자동이체
 exports.scheduleAutoTransfer = async (req, res) => {
   const sessionId = req.cookies.sessionId;
   if (!sessionId) {
@@ -15,6 +16,7 @@ exports.scheduleAutoTransfer = async (req, res) => {
   }
 };
 
+// 자동이체 내역
 exports.getTransferHistory = async (req, res) => {
   const sessionId = req.cookies.sessionId;
   if (!sessionId) {

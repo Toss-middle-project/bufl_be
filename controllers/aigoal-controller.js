@@ -1,5 +1,6 @@
 const goalService = require("../services/ai-service");
 
+// AI 목표 추천 목록
 exports.getGoalRecommendations = async (req, res) => {
   try {
     const recommendations = await goalService.getGoalRecommendations(req);
@@ -15,6 +16,7 @@ exports.getGoalRecommendations = async (req, res) => {
   }
 };
 
+// 목표 저장
 exports.saveGoal = async (req, res) => {
   try {
     const result = await goalService.saveGoal(req.body, req.cookies.sessionId);

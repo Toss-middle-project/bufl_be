@@ -1,5 +1,6 @@
 const accountService = require("../services/account-service");
 
+// 계좌 목록 보기
 exports.getAccounts = async (req, res) => {
   try {
     const sessionId = req.cookies.sessionId;
@@ -14,6 +15,7 @@ exports.getAccounts = async (req, res) => {
   }
 };
 
+// 계좌 거래내역 보기
 exports.getTransactions = async (req, res) => {
   try {
     const { account_id } = req.params;

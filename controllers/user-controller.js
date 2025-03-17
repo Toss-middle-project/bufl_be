@@ -1,5 +1,6 @@
 const userService = require("../services/user-service");
 
+// 시작 화면
 exports.getStartPage = async (req, res) => {
   try {
     res.json({ message: "시작 화면입니다." });
@@ -9,6 +10,7 @@ exports.getStartPage = async (req, res) => {
   }
 };
 
+// 회원가입
 exports.registerUser = async (req, res) => {
   const { userName, userRegnu, userPhone, userPassword } = req.body;
   try {
@@ -25,6 +27,7 @@ exports.registerUser = async (req, res) => {
   }
 };
 
+// PIN 번호 등록
 exports.updatePassword = async (req, res) => {
   const { userPassword } = req.body;
   const sessionId = req.cookies.sessionId;
@@ -37,6 +40,7 @@ exports.updatePassword = async (req, res) => {
   }
 };
 
+// PIN 번호 입력 화면(간편 로그인)
 exports.getPinPage = async (req, res) => {
   try {
     res.json({ message: "PIN 번호 화면입니다." });
@@ -46,6 +50,7 @@ exports.getPinPage = async (req, res) => {
   }
 };
 
+// PIN 번호 검증(간편 로그인)
 exports.verifyPin = async (req, res) => {
   const { userPassword } = req.body;
   const sessionId = req.cookies.sessionId;
@@ -58,17 +63,19 @@ exports.verifyPin = async (req, res) => {
   }
 };
 
+// 사용자 월급 정보 조회
 exports.getSalaryInfo = async (req, res) => {
   const sessionId = req.cookies.sessionId;
   try {
     const result = await userService.getSalaryInfo(sessionId);
     res.status(200).json(result);
   } catch (err) {
-    console.error("월급 정보 입력 화면 오류", err);
+    console.error("월급 정보 화면 오류", err);
     res.status(500).json({ message: "서버오류" });
   }
 };
 
+// 월급 정보 추가
 exports.addSalaryInfo = async (req, res) => {
   const { amount, payDate, accountId } = req.body;
   try {
@@ -80,6 +87,7 @@ exports.addSalaryInfo = async (req, res) => {
   }
 };
 
+// 관심사 선택 화면
 exports.getInterestsPage = async (req, res) => {
   try {
     res.json({ message: "관심사 선택 화면입니다." });
@@ -89,6 +97,7 @@ exports.getInterestsPage = async (req, res) => {
   }
 };
 
+// 관심사 추가
 exports.addInterest = async (req, res) => {
   const sessionId = req.cookies.sessionId;
   const { interest } = req.body;
@@ -101,6 +110,7 @@ exports.addInterest = async (req, res) => {
   }
 };
 
+// 회원탈퇴
 exports.deleteUser = async (req, res) => {
   const sessionId = req.cookies.sessionId;
   try {

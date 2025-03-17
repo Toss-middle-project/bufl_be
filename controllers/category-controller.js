@@ -1,5 +1,6 @@
 const categoryService = require("../services/category-service");
 
+// 카테고리 목록 조회
 exports.getCategories = async (req, res) => {
   try {
     const sessionId = req.cookies.sessionId;
@@ -13,6 +14,7 @@ exports.getCategories = async (req, res) => {
   }
 };
 
+// 카테고리 단건 조회
 exports.getCategoryById = async (req, res) => {
   try {
     const category = await categoryService.getCategoryById(req.params.id);
@@ -23,6 +25,7 @@ exports.getCategoryById = async (req, res) => {
   }
 };
 
+// 카테고리 추가
 exports.addCategories = async (req, res) => {
   try {
     const sessionId = req.cookies.sessionId;
@@ -36,6 +39,7 @@ exports.addCategories = async (req, res) => {
   }
 };
 
+// 카테고리 삭제
 exports.deleteCategory = async (req, res) => {
   try {
     await categoryService.deleteCategory(req.params.id);
@@ -46,6 +50,7 @@ exports.deleteCategory = async (req, res) => {
   }
 };
 
+// 카테고리 - 계좌 정보 조회
 exports.getCategoryAccounts = async (req, res) => {
   try {
     const sessionId = req.cookies.sessionId;
@@ -59,6 +64,7 @@ exports.getCategoryAccounts = async (req, res) => {
   }
 };
 
+// 카테고리 - 꼐좌 연동
 exports.linkCategoryToAccount = async (req, res) => {
   try {
     await categoryService.linkCategoryToAccount(
@@ -72,6 +78,7 @@ exports.linkCategoryToAccount = async (req, res) => {
   }
 };
 
+// 카테고리 - 계좌 연동 조회
 exports.getCategoryAccountInfo = async (req, res) => {
   try {
     const sessionId = req.cookies.sessionId;

@@ -1,5 +1,6 @@
 const consumptionService = require("../services/consumption-service");
 
+// AI 소비 패턴 분석
 exports.getConsumptionPattern = async (req, res) => {
   try {
     const sessionId = req.cookies.sessionId;
@@ -14,6 +15,7 @@ exports.getConsumptionPattern = async (req, res) => {
   }
 };
 
+// AI 카테고리 - 비율 추천
 exports.getRecommendRatio = async (req, res) => {
   try {
     const sessionId = req.cookies.sessionId;
@@ -26,6 +28,7 @@ exports.getRecommendRatio = async (req, res) => {
   }
 };
 
+// 카테고리 추가
 exports.addCategory = async (req, res) => {
   try {
     const sessionId = req.cookies.sessionId;

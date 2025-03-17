@@ -1,5 +1,6 @@
 const goalService = require("../services/goal-service");
 
+// 목표 설정
 exports.createGoal = async (req, res) => {
   try {
     const result = await goalService.createGoal(req);
@@ -10,6 +11,7 @@ exports.createGoal = async (req, res) => {
   }
 };
 
+// 목표 내역 조회
 exports.getGoals = async (req, res) => {
   try {
     const goals = await goalService.getGoals(req);
@@ -20,6 +22,7 @@ exports.getGoals = async (req, res) => {
   }
 };
 
+// 목표 상세 정보 조회
 exports.getGoalById = async (req, res) => {
   try {
     const goal = await goalService.getGoalById(req);
@@ -30,6 +33,7 @@ exports.getGoalById = async (req, res) => {
   }
 };
 
+// 목표 달성 확률 조회
 exports.getGoalPrediction = async (req, res) => {
   try {
     const prediction = await goalService.getGoalPrediction(req);
@@ -42,6 +46,7 @@ exports.getGoalPrediction = async (req, res) => {
   }
 };
 
+// 목표 저축 내역 조회
 exports.getGoalTransactions = async (req, res) => {
   try {
     const transactions = await goalService.getGoalTransactions(req);
@@ -52,6 +57,7 @@ exports.getGoalTransactions = async (req, res) => {
   }
 };
 
+// 목표 저축 예금
 exports.depositGoalAmount = async (req, res) => {
   try {
     const result = await goalService.depositGoalAmount(req);

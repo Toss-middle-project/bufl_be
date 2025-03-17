@@ -1,5 +1,6 @@
 const transactionService = require("../services/expense-service");
 
+// 쇼비내역 조회
 const getUserTransactions = async (req, res) => {
   const sessionId = req.cookies.sessionId;
   if (!sessionId) return res.status(401).json({ message: "세션 없음" });
@@ -24,6 +25,7 @@ const getUserTransactions = async (req, res) => {
   }
 };
 
+// 월별 지출 내역 조회
 const getUserMonthlyExpenses = async (req, res) => {
   const { month } = req.params;
   const sessionId = req.cookies.sessionId;
