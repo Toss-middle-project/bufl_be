@@ -9,6 +9,7 @@ const getUserIdBySession = async (sessionId) => {
   return session[0].user_id;
 };
 
+// 소비내역 조회
 const getUserTransactions = async (userId) => {
   const [transactions] = await db.query(
     `SELECT t.id, t.account_id, t.inout_type, t.tran_amt, t.tran_balance_amt, t.tran_desc, t.transaction_time
@@ -20,6 +21,7 @@ const getUserTransactions = async (userId) => {
   return transactions;
 };
 
+// 월별 지출 내역 조회
 const getMonthlyExpenses = async (userId, month) => {
   const [year, monthNum] = month.split("-");
   const startDate = `${year}-${monthNum}-01`;

@@ -92,6 +92,7 @@ async function executeAutoTransfer(
   }
 }
 
+// 자동이체
 exports.scheduleAutoTransfer = async (sessionId) => {
   const [session] = await db.query(
     "SELECT user_id FROM sessions WHERE session_id = ?",
@@ -157,6 +158,7 @@ exports.scheduleAutoTransfer = async (sessionId) => {
   return "✅ 자동이체 일정이 등록되었습니다.";
 };
 
+// 자동이체 내역
 exports.getTransferHistory = async (sessionId) => {
   const [session] = await db.query(
     "SELECT user_id FROM sessions WHERE session_id = ?",

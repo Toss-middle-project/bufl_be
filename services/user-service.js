@@ -2,6 +2,7 @@ const db = require("../db/db");
 const bcrypt = require("bcrypt");
 const { v4: uuidv4 } = require("uuid");
 
+// 회원가입
 exports.registerUser = async (userName, userRegnu, userPhone, userPassword) => {
   if (!userName || !userRegnu || !userPhone) {
     throw new Error("모든 정보를 입력하세요.");
@@ -33,6 +34,7 @@ exports.registerUser = async (userName, userRegnu, userPhone, userPassword) => {
   };
 };
 
+// PIN 번호 등록
 exports.updatePassword = async (sessionId, userPassword) => {
   if (!sessionId) throw new Error("세션 없음");
 
@@ -54,6 +56,7 @@ exports.updatePassword = async (sessionId, userPassword) => {
   return { message: "PiN 번호 등록 성공" };
 };
 
+// PIN 번호 검증(간편 로그인)
 exports.verifyPin = async (sessionId, userPassword) => {
   if (!sessionId) throw new Error("세션 없음");
 
@@ -80,6 +83,7 @@ exports.verifyPin = async (sessionId, userPassword) => {
   }
 };
 
+// 사용자 월급 정보 조회
 exports.getSalaryInfo = async (sessionId) => {
   if (!sessionId) throw new Error("세션 없음");
 
@@ -110,6 +114,7 @@ exports.getSalaryInfo = async (sessionId) => {
   };
 };
 
+// 월급 정보 추가
 exports.addSalaryInfo = async (amount, payDate, accountId) => {
   if (!amount || !payDate || !accountId) {
     throw new Error("모든 정보를 입력하세요!");
@@ -135,6 +140,7 @@ exports.addSalaryInfo = async (amount, payDate, accountId) => {
   };
 };
 
+// 관심사 추가
 exports.addInterest = async (sessionId, interest) => {
   if (!sessionId) throw new Error("세션 없음");
 
@@ -159,6 +165,7 @@ exports.addInterest = async (sessionId, interest) => {
   return "관심사 등록 성공";
 };
 
+// 회원탈퇴
 exports.deleteUser = async (sessionId) => {
   if (!sessionId) throw new Error("세션 없음");
 

@@ -4,6 +4,7 @@ const aiService = require("./ai-service");
 const analysisStore = new Map();
 const recommendStore = new Map();
 
+// AI 소비 패턴 분석
 exports.analyzeConsumptionPattern = async (sessionId) => {
   try {
     const userId = await getUserIdFromSession(sessionId);
@@ -30,6 +31,7 @@ exports.analyzeConsumptionPattern = async (sessionId) => {
   }
 };
 
+// AI 카테고리 - 비율 추천
 exports.getRecommendedRatio = async (sessionId) => {
   try {
     const userId = await getUserIdFromSession(sessionId);
@@ -67,6 +69,7 @@ exports.getRecommendedRatio = async (sessionId) => {
   }
 };
 
+// 카테고리 추가
 exports.saveRecommendedCategory = async (sessionId) => {
   try {
     const userId = await getUserIdFromSession(sessionId);
