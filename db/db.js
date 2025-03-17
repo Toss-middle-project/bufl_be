@@ -1,10 +1,11 @@
 const mysql = require("mysql2/promise");
+require("dotenv").config("../.env");
 
 const connection = mysql.createPool({
-  host: "bufl-database.crg60wagibq8.ap-northeast-2.rds.amazonaws.com",
-  user: "admin",
-  password: "bufl1234",
-  database: "bufl",
+  host: process.env.DB_HOST,
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  database: process.env.DB_NAME,
   waitForConnections: true, // 연결이 없을 때 대기하도록 설정
   connectionLimit: 10, // 최대 연결 수
   queueLimit: 0, // 대기 큐의 길이
