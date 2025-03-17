@@ -1,5 +1,6 @@
 const db = require("../db/db");
 
+// 계좌 목록 조회
 exports.getUserAccounts = async (sessionId) => {
   const [session] = await db.query(
     "SELECT user_id FROM sessions WHERE session_id = ?",
@@ -27,6 +28,7 @@ exports.getUserAccounts = async (sessionId) => {
   return { message: `${userId}의 계좌목록`, accounts: results };
 };
 
+// 계좌 거래내역 조회
 exports.getAccountTransactions = async (sessionId, accountId) => {
   const [session] = await db.query(
     "SELECT user_id FROM sessions WHERE session_id = ?",

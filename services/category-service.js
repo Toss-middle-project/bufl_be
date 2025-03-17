@@ -1,5 +1,6 @@
 const db = require("../db/db");
 
+// 카테고리 목록 조회
 exports.getCategories = async (sessionId) => {
   const [session] = await db.query(
     "SELECT user_id FROM sessions WHERE session_id = ?",
@@ -35,6 +36,7 @@ exports.getCategories = async (sessionId) => {
   return result;
 };
 
+// 카테고리 단건 조회
 exports.getCategoryById = async (categoryId) => {
   const [category] = await db.query("SELECT * FROM categories WHERE id = ?", [
     categoryId,
@@ -42,6 +44,7 @@ exports.getCategoryById = async (categoryId) => {
   return category;
 };
 
+// 카테고리 추가
 exports.addCategories = async (sessionId, categories) => {
   const [session] = await db.query(
     "SELECT user_id FROM sessions WHERE session_id = ?",
@@ -79,10 +82,12 @@ exports.addCategories = async (sessionId, categories) => {
   );
 };
 
+// 카테고리 삭제
 exports.deleteCategory = async (categoryId) => {
   await db.query("DELETE FROM categories WHERE id = ?", [categoryId]);
 };
 
+// 카테고리 - 계좌 정보 조회
 exports.getCategoryAccounts = async (sessionId) => {
   const [session] = await db.query(
     "SELECT user_id FROM sessions WHERE session_id = ?",
@@ -123,6 +128,7 @@ exports.getCategoryAccounts = async (sessionId) => {
   return validAccounts;
 };
 
+// 카테고리 - 계좌 연동
 exports.linkCategoryToAccount = async (categoryId, accountId) => {
   await db.query("UPDATE categories SET account_id = ? WHERE id = ?", [
     accountId,
@@ -130,6 +136,7 @@ exports.linkCategoryToAccount = async (categoryId, accountId) => {
   ]);
 };
 
+// 카테고리 - 계좌 연동 조회
 exports.getCategoryAccountInfo = async (sessionId) => {
   const [session] = await db.query(
     "SELECT user_id FROM sessions WHERE session_id = ?",

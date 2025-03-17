@@ -64,7 +64,7 @@ exports.getCategoryAccounts = async (req, res) => {
   }
 };
 
-// 카테고리 - 꼐좌 연동
+// 카테고리 - 계좌 연동
 exports.linkCategoryToAccount = async (req, res) => {
   try {
     await categoryService.linkCategoryToAccount(

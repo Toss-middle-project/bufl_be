@@ -4,6 +4,7 @@ const db = require("../db/db");
 
 const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
 
+// 소비 목록 분석 ai
 exports.consumptionPattern = async (transactions) => {
   const transactionSummary = transactions.map(
     ({ tran_desc, transaction_time }) => ({
@@ -42,6 +43,7 @@ exports.consumptionPattern = async (transactions) => {
   return parsedResponse;
 };
 
+// 통장 비율 쪼개기 ai
 exports.recommendRatio = async (salary, interests, transactions) => {
   const interestSummary = interests[0].name;
 
@@ -87,6 +89,7 @@ exports.recommendRatio = async (salary, interests, transactions) => {
   return parsedResponse;
 };
 
+// 목표 추천 ai
 exports.getGoalRecommendations = async (req) => {
   const sessionId = req.cookies.sessionId;
   if (!sessionId) throw new Error("세션 없음");
@@ -147,6 +150,7 @@ exports.getGoalRecommendations = async (req) => {
   return parsedResponse;
 };
 
+// 목표 선택 저장
 exports.saveGoal = async (
   { goal_name, monthly_saving, goal_duration },
   sessionId
