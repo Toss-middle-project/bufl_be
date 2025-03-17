@@ -91,7 +91,6 @@ async function executeAutoTransfer(
     connection.release();
   }
 }
-
 // 자동이체
 exports.scheduleAutoTransfer = async (sessionId) => {
   const [session] = await db.query(
@@ -145,10 +144,18 @@ exports.scheduleAutoTransfer = async (sessionId) => {
     }
 
     const amount = category.amount;
-    const fiveMinutesLater = new Date();
-    fiveMinutesLater.setMinutes(fiveMinutesLater.getMinutes() + 1);
+    const [salaryAccount] = await db.query(
+      "SELECT * FROM salary WHERE user_id = ?",
+      [userId]
+    );
+    const payDate = salaryAccount[0].pay_date;
+    let transferDate = new Date(payDate);
+    transferDate.setDate(payDate.getDate() + 1); // 다음날로 설정
+    transferDate.setHours(3, 0, 0, 0); // 새벽 3시 고정
 
-    schedule.scheduleJob(fiveMinutesLater, () => {
+    console.log(`⏳ 자동이체 예약일: ${transferDate}`);
+
+    schedule.scheduleJob(transferDate, () => {
       executeAutoTransfer(fromAccountId, toAccountId, amount, "자동이체");
     });
   });
