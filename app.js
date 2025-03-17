@@ -3,14 +3,14 @@ const cors = require("cors");
 const session = require("express-session");
 const cookieParser = require("cookie-parser");
 const { specs, swaggerUi } = require("./swagger/swagger-config"); // swagger 설정
-const usersRouter = require("./routes/user-routes"); // 사용자 라우터 가져오기
-const accountRouter = require("./routes/account-routes"); // 계좌목록 가져오기
-const salaryRouter = require("./routes/category-routes"); //월급 쪼개기 카테고리 라우터 가져오기
-const transactionsRouter = require("./routes/transfer-routes"); // 자동이체
-const expensesRouter = require("./routes/expense-routes"); // 소비내역 가져오기
-const goalRouter = require("./routes/goal-routes"); // 목표
-const aiAnalysisRouter = require("./routes/analysis-routes"); //ai 소비 분석 / 카테고리리 비율 추천
-const goalAI = require("./routes/aigoal-routes"); // goalai.js에서 router 가져오기
+const usersRouter = require("./routes/user-routes"); // 사용자 라우터
+const accountRouter = require("./routes/account-routes"); // 계좌목록 라우터
+const salaryRouter = require("./routes/category-routes"); //월급 쪼개기 라우터
+const transactionsRouter = require("./routes/transfer-routes"); // 자동이체 라우터
+const expensesRouter = require("./routes/expense-routes"); // 소비내역 라우터
+const goalRouter = require("./routes/goal-routes"); // 목표 라우터
+const aiAnalysisRouter = require("./routes/analysis-routes"); //ai 소비 분석 / 카테고리리 비율 추천 라유터
+const goalAI = require("./routes/aigoal-routes"); // ai 목표 설정 라우터
 
 const app = express();
 const port = 5000;
@@ -35,13 +35,13 @@ app.use(
 );
 
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(specs));
-app.use("/api/users", usersRouter); // 라우터 등록
-app.use("/api/accounts", accountRouter); // 라우터 등록
-app.use("/api/salary", salaryRouter); // 라우터 등록
+app.use("/api/users", usersRouter);
+app.use("/api/accounts", accountRouter);
+app.use("/api/salary", salaryRouter);
 app.use("/api/transactions", transactionsRouter);
-app.use("/api/expenses", expensesRouter); // 라우터 등록
-app.use("/api/goals", goalRouter); // 라우터 등록
-app.use("/api/ai-goals", goalAI); // 라우터 등록
+app.use("/api/expenses", expensesRouter);
+app.use("/api/goals", goalRouter);
+app.use("/api/ai-goals", goalAI);
 app.use("/api/ai-analysis", aiAnalysisRouter);
 
 app.get("/", async (req, res) => {
