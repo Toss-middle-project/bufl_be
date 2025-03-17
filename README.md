@@ -21,7 +21,7 @@
 ## 🛢️ ERD 
 ![image](https://github.com/user-attachments/assets/4760f4b7-305a-4eb7-9f2c-d2b978ce8610)
 ## 📐 아키텍처
-![image](https://github.com/user-attachments/assets/120ae398-da17-477d-a473-560e2ca4f394)
+![Image](https://github.com/user-attachments/assets/80c45f82-ef82-427e-823b-be4bde774885)
 ## 📃 API 명세서
 ![image](https://github.com/user-attachments/assets/1be5237f-0810-4f25-b160-28132df4f729)
 ![image](https://github.com/user-attachments/assets/0e61245f-b5bb-476a-964a-15542f12a2e2)
