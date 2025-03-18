@@ -16,6 +16,8 @@
 - **API Docs** : `swagger`
 - **배포** : `Vercel`
 - **협업 툴** : `Notion` `slack` `GitHub`
+## 시연영상
+[![시연영상](https://img.youtube.com/vi/UeMTPgQ8u_0/0.jpg)](https://www.youtube.com/watch?v=UeMTPgQ8u_0)
 ## 📁 디렉토리 구조
 ![image](https://github.com/user-attachments/assets/f4458f85-fad9-4e86-8215-7d3bdd8daa5d)
 ## 🛢️ ERD 
@@ -26,5 +28,3 @@
 ![image](https://github.com/user-attachments/assets/1be5237f-0810-4f25-b160-28132df4f729)
 ![image](https://github.com/user-attachments/assets/0e61245f-b5bb-476a-964a-15542f12a2e2)
 
-## 시연영상
-[![시연영상](https://img.youtube.com/vi/UeMTPgQ8u_0/0.jpg)](https://www.youtube.com/watch?v=UeMTPgQ8u_0)
