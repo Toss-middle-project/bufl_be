@@ -27,4 +27,4 @@
 ![image](https://github.com/user-attachments/assets/0e61245f-b5bb-476a-964a-15542f12a2e2)
 
 ## 시연영상
-![유튜브 영상](https://img.youtube.com/vi/UeMTPgQ8u_0/0.jpg)](https://www.youtube.com/watch?v=UeMTPgQ8u_0)
+[![시연영상](https://img.youtube.com/vi/UeMTPgQ8u_0/0.jpg)](https://www.youtube.com/watch?v=UeMTPgQ8u_0)
